@@ -12,6 +12,8 @@ GameScene::~GameScene() {
 	worldTransformBlocks_.clear();
 
 	delete debugCamera_;
+
+	delete modelSkydome_;
 }
 
 void GameScene::Initialize() {
@@ -61,6 +63,11 @@ void GameScene::Initialize() {
 			worldTransformBlocks_[i][j]->translation_.y = kBlockHeight * i;
 		}
 	}
+
+	// スカイドームの生成
+	modelSkydome_ = Model::CreateFromOBJ("skydome", true);
+	skydome_ = new Skydome();
+	skydome_->Initialize(modelSkydome_); 
 }
 
 void GameScene::Updata() {
@@ -141,9 +148,15 @@ void GameScene::Updata() {
 		// ビュープロジェクション行列の更新と転送
 		camera_->UpdateMatrix();
 	}
+
+	// スカイドームの更新
+	skydome_->Update();
+
+
 }
 
-void GameScene::Draw() {
+void GameScene::Draw()
+{
 	Model::PreDraw();
 
 	for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
@@ -154,6 +167,9 @@ void GameScene::Draw() {
 			modelBlock_->Draw(*worldTransformBlock, *camera_);
 		}
 	}
+
+	// スカイドームの描画
+	skydome_->Draw(*camera_);
 
 	Model::PostDraw();
 }
