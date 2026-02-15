@@ -6,7 +6,6 @@ using namespace KamataEngine;
 GameScene::~GameScene() 
 {
 	delete model_;
-	delete debugCamera_;
 	delete player_;
 }
 
@@ -21,19 +20,17 @@ void GameScene::Initialize()
 
 	debugCamera_->GetCamera(); 
 
-	camera_ = 
+	camera_.Initialize();
 
 	//自キャラの生成
 	player_ = new Player();
 
 	//自キャラの初期化
-	player_->Initialize(model_,textureHandle_, );
+	player_->Initialize(model_,textureHandle_, &camera_);
 }
 
 void GameScene::Updata() 
 { 
-	debugCamera_->Update();
-
 	//自キャラの更新
 	player_->Update();
 }
@@ -41,5 +38,7 @@ void GameScene::Updata()
 void GameScene::Draw() 
 {
 	//自キャラの描画
+	Model::PreDraw();
 	player_->Draw();
+	Model::PostDraw();
 }

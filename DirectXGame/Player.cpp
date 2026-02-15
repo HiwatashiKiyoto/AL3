@@ -13,6 +13,7 @@ void Player::Initialize(KamataEngine::Model* model, uint32_t textureHandle,Kamat
 	
 
 	worldTransform_.Initialize();
+	
 
 }
 
@@ -24,7 +25,6 @@ void Player::Update()
 
 void Player::Draw() 
 {
-	assert(camera_);
 	// 3Dモデルの描画
 	model_->Draw(worldTransform_, *camera_, textureHandle_);
 }

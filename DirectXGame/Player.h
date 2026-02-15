@@ -33,6 +33,7 @@ public:
 	    Model* model_ = nullptr;
 
 		uint32_t textureHandle_ = 0u;
+		
 		KamataEngine::Camera* camera_ = nullptr;
 
 };

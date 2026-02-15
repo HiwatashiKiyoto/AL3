@@ -31,7 +31,7 @@ private:
 	//デバッグカメラ
 	KamataEngine::DebugCamera* debugCamera_ = nullptr;
 
-	KamataEngine::Camera* camera_ = nullptr;
+	KamataEngine::Camera camera_;
 	
 	Player* player_ = nullptr;
 };
