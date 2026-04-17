@@ -1,4 +1,5 @@
 #include "GameScene.h"
+#include "WorldTransformConfig.h"
 
 using namespace KamataEngine;
 
@@ -14,6 +15,10 @@ GameScene::~GameScene() {
 	delete debugCamera_;
 
 	delete modelSkydome_;
+
+	delete player_;
+
+	delete modelPlayer_;
 }
 
 void GameScene::Initialize() {
@@ -22,7 +27,7 @@ void GameScene::Initialize() {
 	camera_->Initialize();
 
 	// 3Dモデルの生成
-	modelBlock_ = Model::Create();
+	modelBlock_ = Model::CreateFromOBJ("block", true);
 	assert(modelBlock_);
 
 	// ワールドトランスフォームの初期化
@@ -36,8 +41,8 @@ void GameScene::Initialize() {
 	const uint32_t kNumBlockHorizontal = 20;
 
 	// ブロック一個分の横幅
-	const float kBlockWidth = 2.0f;
-	const float kBlockHeight = 2.0f;
+	const float kBlockWidth = 1.0f;
+	const float kBlockHeight = 1.0f;
 
 	// 要素数を変更する
 	worldTransformBlocks_.resize(kNumBlockVirtical);
@@ -68,62 +73,27 @@ void GameScene::Initialize() {
 	modelSkydome_ = Model::CreateFromOBJ("skydome", true);
 	skydome_ = new Skydome();
 	skydome_->Initialize(modelSkydome_); 
+
+	//プレイヤーの生成
+	modelPlayer_ = Model::CreateFromOBJ("player", true);
+	assert(modelPlayer_);
+	player_ = new Player();
+	player_->Initialize(modelPlayer_);
 }
 
 void GameScene::Updata() {
 	// ブロックの更新
-	for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) {
-		for (WorldTransform* worldTransformBlock : worldTransformBlockLine) {
-			if (!worldTransformBlock) {
+	for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) 
+	{
+		for (WorldTransform* worldTransformBlock : worldTransformBlockLine)
+		{
+			if (!worldTransformBlock)
+				{
 				continue;
-			}
+				}
 
-			float sx = worldTransformBlock->scale_.x;
-			float sy = worldTransformBlock->scale_.y;
-			float sz = worldTransformBlock->scale_.z;
-
-			float rx = worldTransformBlock->rotation_.x;
-			float ry = worldTransformBlock->rotation_.y;
-			float rz = worldTransformBlock->rotation_.z;
-
-			float tx = worldTransformBlock->translation_.x;
-			float ty = worldTransformBlock->translation_.y;
-			float tz = worldTransformBlock->translation_.z;
-
-			// sin, cosを各軸分用意
-			float sx_s = sinf(rx);
-			float cx_c = cosf(rx);
-			float sy_s = sinf(ry);
-			float cy_c = cosf(ry);
-			float sz_s = sinf(rz);
-			float cz_c = cosf(rz);
-
-			// ---アフィン行列の各要素に直接代入---
-			// 1行目
-			worldTransformBlock->matWorld_.m[0][0] = sx * (cy_c * cz_c + sy_s * sx_s * sz_s);
-			worldTransformBlock->matWorld_.m[0][1] = sx * (sy_s * sx_s * cz_c - cy_c * sz_s);
-			worldTransformBlock->matWorld_.m[0][2] = sx * (sy_s * cx_c);
-			worldTransformBlock->matWorld_.m[0][3] = 0.0f;
-
-			// 2行目
-			worldTransformBlock->matWorld_.m[1][0] = sy * (cx_c * sz_s);
-			worldTransformBlock->matWorld_.m[1][1] = sy * (cx_c * cz_c);
-			worldTransformBlock->matWorld_.m[1][2] = sy * (-sx_s);
-			worldTransformBlock->matWorld_.m[1][3] = 0.0f;
-
-			// 3行目
-			worldTransformBlock->matWorld_.m[2][0] = sz * (cy_c * sx_s * sz_s - sy_s * cz_c);
-			worldTransformBlock->matWorld_.m[2][1] = sz * (cy_c * sx_s * cz_c + sy_s * sz_s);
-			worldTransformBlock->matWorld_.m[2][2] = sz * (cy_c * cx_c);
-			worldTransformBlock->matWorld_.m[2][3] = 0.0f;
-
-			// 4行目（平行移動）
-			worldTransformBlock->matWorld_.m[3][0] = tx;
-			worldTransformBlock->matWorld_.m[3][1] = ty;
-			worldTransformBlock->matWorld_.m[3][2] = tz;
-			worldTransformBlock->matWorld_.m[3][3] = 1.0f;
-
-			worldTransformBlock->TransferMatrix();
+			
+			WorldTransformConfig(*worldTransformBlock);
 		}
 	}
 
@@ -152,6 +122,8 @@ void GameScene::Updata() {
 	// スカイドームの更新
 	skydome_->Update();
 
+	//プレイヤーの更新
+	player_->Update();
 
 }
 
@@ -170,6 +142,9 @@ void GameScene::Draw()
 
 	// スカイドームの描画
 	skydome_->Draw(*camera_);
+
+	//プレイヤーの描画
+	player_->Draw(*camera_);
 
 	Model::PostDraw();
 }
