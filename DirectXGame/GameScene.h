@@ -3,6 +3,7 @@
 #include <vector>
 #include"Skydome.h"
 #include"Player.h"
+#include"MapChipField.h"
 
 // ゲームシーン
 class GameScene 
@@ -43,4 +44,8 @@ private:
 	KamataEngine::Model* modelPlayer_ = nullptr;
 	Player* player_ = nullptr;
 
+	//マップチップフィールド用
+	MapChipField* mapChipField_;
+
+	void GenerateBlocks();
 };
