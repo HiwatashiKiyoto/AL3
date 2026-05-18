@@ -4,8 +4,11 @@
 #include <numbers>
 #include<algorithm>
 
-void Player::Initialize(KamataEngine::Model* model, const KamataEngine::Vector3& position) {
+void Player::Initialize(KamataEngine::Model* model, KamataEngine::Camera* camera, const KamataEngine::Vector3& position) 
+{
 	model_ = model;
+	camera_ = camera;
+
 	worldTransform_.Initialize();
 	worldTransform_.translation_ = position;
 

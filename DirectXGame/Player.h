@@ -10,7 +10,7 @@ public:
 	/// <summary>
 	/// 初期化
 	/// </summary>
-	void Initialize(KamataEngine::Model* model, const KamataEngine::Vector3& position);
+	void Initialize(KamataEngine::Model* model, KamataEngine::Camera* camera, const KamataEngine::Vector3& position);
 
 	/// <summary>
 	/// 更新
@@ -23,6 +23,8 @@ public:
 	void Draw(const KamataEngine::Camera& camera);
 
 private:
+	KamataEngine::Camera* camera_ = nullptr;
+
 	//左右
 	enum class LRDirection
 	{
