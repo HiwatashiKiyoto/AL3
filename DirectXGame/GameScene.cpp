@@ -24,12 +24,19 @@ GameScene::~GameScene()
 	delete modelPlayer_;
 
 	delete mapChipField_;
+
+	delete cameraController_;
 }
 
 void GameScene::Initialize() {
 	// カメラの初期化
-	camera_ = new Camera();
-	camera_->Initialize();
+	//camera_ = new Camera();
+	//camera_->Initialize();
+
+	cameraController_ = new CameraController();
+	cameraController_->Initialize();
+
+	camera_ = cameraController_->GetCamera();
 
 	// 3Dモデルの生成
 	modelBlock_ = Model::CreateFromOBJ("block", true);
@@ -55,13 +62,22 @@ void GameScene::Initialize() {
 	modelPlayer_ = Model::CreateFromOBJ("player", true);
 	assert(modelPlayer_);
 	player_ = new Player();
+
+	// 追従対象をプレイヤーに設定
+	cameraController_->SetTarget(player_); 
+	// カメラをプレイヤーの背後に配置
+	cameraController_->Reset();      
+
+	CameraController::Rect cameraArea = {0.0f, 100.0f, 0.0f, 100.0f};
+	cameraController_->SetMovableArea(cameraArea);
+
 	// 座標をマップチップ番号で指定
 	KamataEngine::Vector3 playerPosition = mapChipField_->GetMapChipPositionByIndex(1, 18);
 	player_->Initialize(modelPlayer_, camera_, playerPosition);
 
 }
 
-void GameScene::Updata() {
+void GameScene::Update() {
 	// ブロックの更新
 	for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) 
 	{
@@ -99,7 +115,11 @@ void GameScene::Updata() {
 	else
 	{
 		// ビュープロジェクション行列の更新と転送
-		camera_->UpdateMatrix();
+		//camera_->UpdateMatrix();
+
+		cameraController_->Update();
+
+		camera_ = cameraController_->GetCamera();
 	}
 
 	// スカイドームの更新

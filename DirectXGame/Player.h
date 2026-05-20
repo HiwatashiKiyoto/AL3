@@ -22,7 +22,10 @@ public:
 	/// </summary>
 	void Draw(const KamataEngine::Camera& camera);
 
+	const KamataEngine::WorldTransform& GetWorldTransform() const { return worldTransform_; }
+
 private:
+
 	KamataEngine::Camera* camera_ = nullptr;
 
 	//左右

@@ -4,6 +4,7 @@
 #include"Skydome.h"
 #include"Player.h"
 #include"MapChipField.h"
+#include "CameraController.h"
 
 // ゲームシーン
 class GameScene 
@@ -14,7 +15,7 @@ public:
 	void Initialize();
 
 	// 更新
-	void Updata();
+	void Update();
 
 	// 描画
 	void Draw();
@@ -29,6 +30,9 @@ private:
 
 	// カメラ
 	KamataEngine::Camera* camera_;
+
+	CameraController* cameraController_ = nullptr;
+
 
 	//デバッグカメラ有効
 	bool isDebugCameraActive_ = false;
