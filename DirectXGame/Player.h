@@ -24,6 +24,7 @@ public:
 
 	const KamataEngine::WorldTransform& GetWorldTransform() const { return worldTransform_; }
 
+	const KamataEngine::Vector3& GetVelocity() const { return velocity_; }
 private:
 
 	KamataEngine::Camera* camera_ = nullptr;
@@ -72,4 +73,6 @@ private:
 	//ジャンプ初速（上方向）
 	static inline const float kJumpAcceleration = 0.5f;
 
+
+	
 };

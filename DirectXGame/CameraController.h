@@ -50,4 +50,17 @@ private:
 
 	// 追従対象とカメラの座標の差(オフセット)
 	KamataEngine::Vector3 targetOffset_ = {0.0f, 0.0f, -15.0f};
+
+	//カメラの目標座標
+	KamataEngine::Vector3 destination_ = {};
+
+	static inline const float kInterpolationRate = 0.1f;
+
+	// 速度掛け算
+	static inline const float kVelocityBias = 15.0f;
+
+	//追従対象の各方向へのカメラ移動範囲
+	static inline const Rect kMargin = {12.0f, 12.0f, 5.0f, 5.0f};
+
+
 };
