@@ -75,6 +75,7 @@ void GameScene::Initialize() {
 	KamataEngine::Vector3 playerPosition = mapChipField_->GetMapChipPositionByIndex(1, 18);
 	player_->Initialize(modelPlayer_, camera_, playerPosition);
 
+	player_->SetMapChipField(mapChipField_);
 }
 
 void GameScene::Update() {

@@ -5,6 +5,8 @@
 
 #include "KamataEngine.h"
 
+class MapChipField;
+
 class Player {
 public:
 	/// <summary>
@@ -25,6 +27,37 @@ public:
 	const KamataEngine::WorldTransform& GetWorldTransform() const { return worldTransform_; }
 
 	const KamataEngine::Vector3& GetVelocity() const { return velocity_; }
+
+	void SetMapChipField(MapChipField* mapChipField) { mapChipField_ = mapChipField; }
+
+	//マップとの当たり判定情報
+	struct CollisionMapInfo
+	{
+		bool isCeilingHit = false;
+		bool isGrounded = false;
+		bool isWallHit = false;
+		KamataEngine::Vector3 move;
+	};
+
+	void CheckMapCollision(CollisionMapInfo& info);
+
+	void CheckMapCollisionUp(CollisionMapInfo& info);
+	void CheckMapCollisionDown(CollisionMapInfo& info);
+	void CheckMapCollisionRight(CollisionMapInfo& info);
+	void CheckMapCollisionLeft(CollisionMapInfo& info);
+
+	enum Corner
+	{
+		kRightBottom,	//右下
+		kLeftBottom,	//左下
+		kRightTop,		//右上
+		kLeftTop,		//左上
+
+		kNumCorner		//要素数
+	};
+
+	KamataEngine::Vector3 CornerPosition(const KamataEngine::Vector3& center, Corner corner);
+
 private:
 
 	KamataEngine::Camera* camera_ = nullptr;
@@ -73,6 +106,13 @@ private:
 	//ジャンプ初速（上方向）
 	static inline const float kJumpAcceleration = 0.5f;
 
+	//マップチップによるフィールド
+	MapChipField* mapChipField_ = nullptr;
 
-	
+	//キャラクターの当たり判定サイズ
+	static inline const float kWidth = 0.8f;
+	static inline const float kHeight = 0.8f;
+
+	void MoveInput();
+
 };
