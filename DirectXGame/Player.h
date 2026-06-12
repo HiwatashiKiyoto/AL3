@@ -40,6 +40,8 @@ public:
 	};
 
 	void CheckMapCollision(CollisionMapInfo& info);
+	void MoveByCollisionMapInfo(const CollisionMapInfo& info);
+	void UpdateOnCollision(const CollisionMapInfo& info);
 
 	void CheckMapCollisionUp(CollisionMapInfo& info);
 	void CheckMapCollisionDown(CollisionMapInfo& info);
@@ -112,6 +114,7 @@ private:
 	//キャラクターの当たり判定サイズ
 	static inline const float kWidth = 0.8f;
 	static inline const float kHeight = 0.8f;
+	static inline const float kBlank = 0.01f;
 
 	void MoveInput();
 

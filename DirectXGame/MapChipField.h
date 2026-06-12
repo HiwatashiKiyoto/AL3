@@ -5,7 +5,7 @@
 
 #include <KamataEngine.h>
 
-enum class MapChipType 
+enum class MapChipType
 {
 	kBlank, // 空白
 	kBlock, // ブロック
@@ -16,6 +16,20 @@ struct MapChipData
 	std::vector<std::vector<MapChipType>> data;
 };
 
+struct IndexSet 
+{
+	uint32_t xIndex;
+	uint32_t yIndex;
+};
+
+//範囲矩形
+struct Rect
+{
+	float left;	  //左端
+	float right;  //右端
+	float bottom; //下端
+	float top;	  //上端
+};
 
 class MapChipField 
 {
@@ -42,4 +56,7 @@ public:
 
 	uint32_t GetNumBlockHorizontal() const { return kNumBlockHorizontal; }
 
+	IndexSet GetMapChipIndexSetByPosition(const KamataEngine::Vector3& position);
+
+	Rect GetRectByIndex(uint32_t xIndex, uint32_t yIndex);
 };

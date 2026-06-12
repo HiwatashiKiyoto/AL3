@@ -32,13 +32,13 @@ void Player::Update()
 	CheckMapCollision(collisionMapInfo);
 
 	// 移動
-	worldTransform_.translation_.x += collisionMapInfo.move.x;
-	worldTransform_.translation_.y += collisionMapInfo.move.y;
+	MoveByCollisionMapInfo(collisionMapInfo);
+	UpdateOnCollision(collisionMapInfo);
 
 	//状態フラグを更新
 	onGround_ = collisionMapInfo.isGrounded;
 
-	if (collisionMapInfo.isCeilingHit || collisionMapInfo.isGrounded)
+	if (collisionMapInfo.isGrounded)
 	{
 		velocity_.y = 0.0f;
 	}
@@ -133,10 +133,29 @@ void Player::CheckMapCollision(CollisionMapInfo& info)
 	CheckMapCollisionLeft(info);
 }
 
+void Player::MoveByCollisionMapInfo(const CollisionMapInfo& info)
+{
+	// 移動
+	worldTransform_.translation_.x += info.move.x;
+	worldTransform_.translation_.y += info.move.y;
+	worldTransform_.translation_.z += info.move.z;
+}
+
+void Player::UpdateOnCollision(const CollisionMapInfo& info)
+{
+	// 天井に当たった
+	if (info.isCeilingHit)
+	{
+		KamataEngine::DebugText::GetInstance()->ConsolePrintf("hit ceiling\n");
+		velocity_.y = 0.0f;
+	}
+}
+
 void Player::CheckMapCollisionUp(CollisionMapInfo& info) 
 {
 	// 上に移動している場合のみ判定する
-	if (info.move.y > 0.0f) {
+	if (info.move.y >= 0.0f)
+	{
 		// 移動後の中心座標を計算（Y軸のみ移動させる）
 		KamataEngine::Vector3 nextCenter = worldTransform_.translation_;
 		nextCenter.y += info.move.y;
@@ -150,14 +169,31 @@ void Player::CheckMapCollisionUp(CollisionMapInfo& info)
 		rightTop.x -= 0.1f;
 
 		// 座標をマップのインデックス(何マス目か)に変換
-		uint32_t yIndex = static_cast<uint32_t>(leftTop.y / MapChipField::kBlockHeight);
-		uint32_t xIndexLeft = static_cast<uint32_t>(leftTop.x / MapChipField::kBlockWidth);
-		uint32_t xIndexRight = static_cast<uint32_t>(rightTop.x / MapChipField::kBlockWidth);
+		IndexSet indexSetLeft = mapChipField_->GetMapChipIndexSetByPosition(leftTop);
+		IndexSet indexSetRight = mapChipField_->GetMapChipIndexSetByPosition(rightTop);
+
+		MapChipType leftType = mapChipField_->GetMapChipTypeByIndex(indexSetLeft.xIndex, indexSetLeft.yIndex);
+		MapChipType rightType = mapChipField_->GetMapChipTypeByIndex(indexSetRight.xIndex, indexSetRight.yIndex);
 
 		// ブロックと重なっているかチェック
-		if (mapChipField_->GetMapChipTypeByIndex(xIndexLeft, yIndex) == MapChipType::kBlock || mapChipField_->GetMapChipTypeByIndex(xIndexRight, yIndex) == MapChipType::kBlock) {
+		bool hit = false;
+		IndexSet indexSet{};
+		if (leftType == MapChipType::kBlock)
+		{
+			hit = true;
+			indexSet = indexSetLeft;
+		}
+		else if (rightType == MapChipType::kBlock)
+		{
+			hit = true;
+			indexSet = indexSetRight;
+		}
+
+		if (hit)
+		{ 
+			Rect rect = mapChipField_->GetRectByIndex(indexSet.xIndex, indexSet.yIndex);
+			info.move.y = std::max(0.0f, info.move.y - (leftTop.y - rect.bottom) - kBlank); // これ以上上に移動させない
 			info.isCeilingHit = true; // 天井に当たった！
-			info.move.y = 0.0f;       // これ以上上に移動させない
 		}
 	}
 }
@@ -165,7 +201,7 @@ void Player::CheckMapCollisionUp(CollisionMapInfo& info)
 void Player::CheckMapCollisionDown(CollisionMapInfo& info) 
 {
 	// 下に移動している場合のみ判定する
-	if (info.move.y < 0.0f) {
+	if (info.move.y <= 0.0f) {
 		// 移動後の中心座標を計算
 		KamataEngine::Vector3 nextCenter = worldTransform_.translation_;
 		nextCenter.y += info.move.y;
@@ -194,7 +230,7 @@ void Player::CheckMapCollisionDown(CollisionMapInfo& info)
 void Player::CheckMapCollisionRight(CollisionMapInfo& info) 
 {
 	// 右に移動している場合のみ判定する
-	if (info.move.x > 0.0f) {
+	if (info.move.x >= 0.0f) {
 		// 移動後の中心座標を計算（X軸のみ移動させる）
 		KamataEngine::Vector3 nextCenter = worldTransform_.translation_;
 		nextCenter.x += info.move.x;
@@ -223,7 +259,7 @@ void Player::CheckMapCollisionRight(CollisionMapInfo& info)
 void Player::CheckMapCollisionLeft(CollisionMapInfo& info) 
 {
 	// 左に移動している場合のみ判定する
-	if (info.move.x < 0.0f) {
+	if (info.move.x <= 0.0f) {
 		// 移動後の中心座標を計算
 		KamataEngine::Vector3 nextCenter = worldTransform_.translation_;
 		nextCenter.x += info.move.x;
