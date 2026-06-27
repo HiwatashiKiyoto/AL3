@@ -1,5 +1,6 @@
 #define NOMINMAX
 #include "Enemy.h"
+#include "Player.h"
 #include "WorldTransformConfig.h"
 #include <cmath>
 #include <numbers>
@@ -51,4 +52,28 @@ void Enemy::Draw(const Camera& camera)
 	Model::PreDraw();
 	model_->Draw(worldTransform_, camera);
 	Model::PostDraw();
+}
+
+Vector3 Enemy::GetWorldPosition() const
+{
+	Vector3 worldPos;
+	worldPos.x = worldTransform_.matWorld_.m[3][0];
+	worldPos.y = worldTransform_.matWorld_.m[3][1];
+	worldPos.z = worldTransform_.matWorld_.m[3][2];
+	return worldPos;
+}
+
+AABB Enemy::GetAABB() const
+{
+	Vector3 worldPos = GetWorldPosition();
+
+	AABB aabb;
+	aabb.min = {worldPos.x - kWidth / 2.0f, worldPos.y, worldPos.z - kWidth / 2.0f};
+	aabb.max = {worldPos.x + kWidth / 2.0f, worldPos.y + kHeight, worldPos.z + kWidth / 2.0f};
+	return aabb;
+}
+
+void Enemy::OnCollision(const Player* player)
+{
+	(void)player;
 }

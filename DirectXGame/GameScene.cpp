@@ -24,7 +24,11 @@ GameScene::~GameScene()
 
 	delete modelPlayer_;
 
-	delete enemy_;
+	for (Enemy* enemy : enemies_)
+	{
+		delete enemy;
+	}
+	enemies_.clear();
 
 	delete modelEnemy_;
 
@@ -84,10 +88,17 @@ void GameScene::Initialize() {
 
 	modelEnemy_ = Model::CreateFromOBJ("enemy", true);
 	assert(modelEnemy_);
-	enemy_ = new Enemy();
-	KamataEngine::Vector3 enemyPosition = mapChipField_->GetMapChipPositionByIndex(8, 19);
-	enemyPosition.y = mapChipField_->GetRectByIndex(8, 19).top + Enemy::GetGroundOffset();
-	enemy_->Initialize(modelEnemy_, camera_, enemyPosition);
+
+	const uint32_t enemyCount = 3;
+	const uint32_t enemyXIndices[enemyCount] = {7, 10, 13};
+	for (uint32_t i = 0; i < enemyCount; ++i)
+	{
+		Enemy* newEnemy = new Enemy();
+		KamataEngine::Vector3 enemyPosition = mapChipField_->GetMapChipPositionByIndex(enemyXIndices[i], 19);
+		enemyPosition.y = mapChipField_->GetRectByIndex(enemyXIndices[i], 19).top + Enemy::GetGroundOffset();
+		newEnemy->Initialize(modelEnemy_, camera_, enemyPosition);
+		enemies_.push_back(newEnemy);
+	}
 }
 
 void GameScene::Update() {
@@ -141,10 +152,12 @@ void GameScene::Update() {
 	// プレイヤーの更新
 	player_->Update();
 
-	if (enemy_)
+	for (Enemy* enemy : enemies_)
 	{
-		enemy_->Update();
+		enemy->Update();
 	}
+
+	CheckAllCollisions();
 }
 
 void GameScene::Draw() 
@@ -169,12 +182,27 @@ void GameScene::Draw()
 	// プレイヤーの描画
 	player_->Draw(*camera_);
 
-	if (enemy_)
+	for (Enemy* enemy : enemies_)
 	{
-		enemy_->Draw(*camera_);
+		enemy->Draw(*camera_);
 	}
 
 	Model::PostDraw();
+}
+
+void GameScene::CheckAllCollisions()
+{
+	AABB playerAABB = player_->GetAABB();
+
+	for (Enemy* enemy : enemies_)
+	{
+		AABB enemyAABB = enemy->GetAABB();
+		if (IsCollision(playerAABB, enemyAABB))
+		{
+			player_->OnCollision(enemy);
+			enemy->OnCollision(player_);
+		}
+	}
 }
 
 void GameScene::GenerateBlocks()

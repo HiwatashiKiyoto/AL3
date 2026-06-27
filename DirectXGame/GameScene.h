@@ -6,6 +6,7 @@
 #include "MapChipField.h"
 #include "Player.h"
 #include "Skydome.h"
+#include <list>
 #include <vector>
 
 class GameScene
@@ -35,9 +36,10 @@ private:
 	Player* player_ = nullptr;
 
 	KamataEngine::Model* modelEnemy_ = nullptr;
-	Enemy* enemy_ = nullptr;
+	std::list<Enemy*> enemies_;
 
 	MapChipField* mapChipField_ = nullptr;
 
 	void GenerateBlocks();
+	void CheckAllCollisions();
 };
