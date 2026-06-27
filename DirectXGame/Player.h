@@ -84,6 +84,8 @@ private:
 	static inline const float kAcceleration = 0.01f;
 
 	static inline const float kAttenuation = 0.01f;
+	static inline const float kAttenuationLanding = 0.01f;
+	static inline const float kAttenuationWall = 0.01f;
 
 	static inline const float kLimitRunSpeed = 2.0f;
 
@@ -115,6 +117,7 @@ private:
 	static inline const float kWidth = 0.8f;
 	static inline const float kHeight = 0.8f;
 	static inline const float kBlank = 0.01f;
+	static inline const float kCollisionMargin = 0.1f;
 
 	void MoveInput();
 
