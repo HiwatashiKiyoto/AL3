@@ -32,6 +32,9 @@ GameScene::~GameScene()
 
 	delete modelEnemy_;
 
+	delete deathParticles_;
+	delete modelDeathParticles_;
+
 	delete mapChipField_;
 
 	delete cameraController_;
@@ -99,6 +102,11 @@ void GameScene::Initialize() {
 		newEnemy->Initialize(modelEnemy_, camera_, enemyPosition);
 		enemies_.push_back(newEnemy);
 	}
+
+	modelDeathParticles_ = Model::CreateSphere();
+	assert(modelDeathParticles_);
+	deathParticles_ = new DeathParticles();
+	deathParticles_->Initialize(modelDeathParticles_, camera_, player_->GetWorldPosition());
 }
 
 void GameScene::Update() {
@@ -157,6 +165,20 @@ void GameScene::Update() {
 		enemy->Update();
 	}
 
+#ifdef _DEBUG
+	if (Input::GetInstance()->TriggerKey(DIK_F))
+	{
+		delete deathParticles_;
+		deathParticles_ = new DeathParticles();
+		deathParticles_->Initialize(modelDeathParticles_, camera_, player_->GetWorldPosition());
+	}
+#endif
+
+	if (deathParticles_)
+	{
+		deathParticles_->Update();
+	}
+
 	CheckAllCollisions();
 }
 
@@ -188,6 +210,11 @@ void GameScene::Draw()
 	}
 
 	Model::PostDraw();
+
+	if (deathParticles_)
+	{
+		deathParticles_->Draw();
+	}
 }
 
 void GameScene::CheckAllCollisions()
