@@ -1,5 +1,6 @@
 #include "GameScene.h"
 #include "WorldTransformConfig.h"
+#include <cassert>
 
 using namespace KamataEngine;
 
@@ -22,6 +23,10 @@ GameScene::~GameScene()
 	delete player_;
 
 	delete modelPlayer_;
+
+	delete enemy_;
+
+	delete modelEnemy_;
 
 	delete mapChipField_;
 
@@ -76,6 +81,13 @@ void GameScene::Initialize() {
 	player_->Initialize(modelPlayer_, camera_, playerPosition);
 
 	player_->SetMapChipField(mapChipField_);
+
+	modelEnemy_ = Model::CreateFromOBJ("enemy", true);
+	assert(modelEnemy_);
+	enemy_ = new Enemy();
+	KamataEngine::Vector3 enemyPosition = mapChipField_->GetMapChipPositionByIndex(8, 19);
+	enemyPosition.y = mapChipField_->GetRectByIndex(8, 19).top + Enemy::GetGroundOffset();
+	enemy_->Initialize(modelEnemy_, camera_, enemyPosition);
 }
 
 void GameScene::Update() {
@@ -128,6 +140,11 @@ void GameScene::Update() {
 
 	// プレイヤーの更新
 	player_->Update();
+
+	if (enemy_)
+	{
+		enemy_->Update();
+	}
 }
 
 void GameScene::Draw() 
@@ -151,6 +168,11 @@ void GameScene::Draw()
 
 	// プレイヤーの描画
 	player_->Draw(*camera_);
+
+	if (enemy_)
+	{
+		enemy_->Draw(*camera_);
+	}
 
 	Model::PostDraw();
 }
