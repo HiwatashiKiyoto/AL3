@@ -62,6 +62,7 @@ private:
 
 	void GenerateBlocks();
 	void CheckAllCollisions();
+	void RemoveDeadEnemies();
 	void ChangePhase();
 	void UpdateDeathPhase();
 	void UpdateFadeInPhase();

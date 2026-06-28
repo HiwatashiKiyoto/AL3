@@ -200,6 +200,7 @@ void GameScene::Update() {
 	}
 
 	CheckAllCollisions();
+	RemoveDeadEnemies();
 	ChangePhase();
 }
 
@@ -341,6 +342,11 @@ void GameScene::CheckAllCollisions()
 
 	for (Enemy* enemy : enemies_)
 	{
+		if (enemy->IsCollisionDisabled())
+		{
+			continue;
+		}
+
 		AABB enemyAABB = enemy->GetAABB();
 		if (IsCollision(playerAABB, enemyAABB))
 		{
@@ -348,6 +354,20 @@ void GameScene::CheckAllCollisions()
 			enemy->OnCollision(player_);
 		}
 	}
+}
+
+void GameScene::RemoveDeadEnemies()
+{
+	enemies_.remove_if([](Enemy* enemy)
+	{
+		if (enemy->IsDead())
+		{
+			delete enemy;
+			return true;
+		}
+
+		return false;
+	});
 }
 
 void GameScene::GenerateBlocks()

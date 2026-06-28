@@ -34,6 +34,7 @@ public:
 	AABB GetAABB() const;
 	void OnCollision(const Enemy* enemy);
 	bool IsDead() const { return isDead_; }
+	bool IsAttack() const { return behavior_ == Behavior::kAttack; }
 
 	void SetMapChipField(MapChipField* mapChipField) { mapChipField_ = mapChipField; }
 
