@@ -33,6 +33,7 @@ public:
 	KamataEngine::Vector3 GetWorldPosition() const;
 	AABB GetAABB() const;
 	void OnCollision(const Enemy* enemy);
+	bool IsDead() const { return isDead_; }
 
 	void SetMapChipField(MapChipField* mapChipField) { mapChipField_ = mapChipField; }
 
@@ -106,6 +107,7 @@ private:
 
 	//設置状態フラグ
 	bool onGround_ = true;
+	bool isDead_ = false;
 
 	//重力加速度（下方向）
 	static inline const float kGravityAcceleration = 0.04f;

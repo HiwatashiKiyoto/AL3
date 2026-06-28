@@ -21,6 +21,10 @@ void Player::Initialize(KamataEngine::Model* model, KamataEngine::Camera* camera
 
 void Player::Update()
 {
+	if (isDead_)
+	{
+		return;
+	}
 
 	MoveInput();
 
@@ -84,8 +88,7 @@ AABB Player::GetAABB() const
 void Player::OnCollision(const Enemy* enemy)
 {
 	(void)enemy;
-	velocity_.y = kJumpAcceleration;
-	onGround_ = false;
+	isDead_ = true;
 }
 
 void Player::CheckMapCollision(CollisionMapInfo& info)

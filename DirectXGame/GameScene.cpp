@@ -105,11 +105,18 @@ void GameScene::Initialize() {
 
 	modelDeathParticles_ = Model::CreateSphere();
 	assert(modelDeathParticles_);
-	deathParticles_ = new DeathParticles();
-	deathParticles_->Initialize(modelDeathParticles_, camera_, player_->GetWorldPosition());
+	deathParticles_ = nullptr;
+	phase_ = Phase::kPlay;
+	finished_ = false;
 }
 
 void GameScene::Update() {
+	if (phase_ == Phase::kDeath)
+	{
+		UpdateDeathPhase();
+		ChangePhase();
+		return;
+	}
 	// ブロックの更新
 	for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) 
 	{
@@ -128,7 +135,7 @@ void GameScene::Update() {
 
 #ifdef _DEBUG
 
-	if (Input::GetInstance()->TriggerKey(DIK_SPACE))
+	if (Input::GetInstance()->TriggerKey(DIK_TAB))
 	{
 		isDebugCameraActive_ = true;
 	}
@@ -165,21 +172,64 @@ void GameScene::Update() {
 		enemy->Update();
 	}
 
-#ifdef _DEBUG
-	if (Input::GetInstance()->TriggerKey(DIK_F))
-	{
-		delete deathParticles_;
-		deathParticles_ = new DeathParticles();
-		deathParticles_->Initialize(modelDeathParticles_, camera_, player_->GetWorldPosition());
-	}
-#endif
-
 	if (deathParticles_)
 	{
 		deathParticles_->Update();
 	}
 
 	CheckAllCollisions();
+	ChangePhase();
+}
+
+void GameScene::UpdateDeathPhase()
+{
+	for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_)
+	{
+		for (WorldTransform* worldTransformBlock : worldTransformBlockLine)
+		{
+			if (!worldTransformBlock)
+			{
+				continue;
+			}
+
+			WorldTransformConfig(*worldTransformBlock);
+		}
+	}
+
+	skydome_->Update();
+
+	for (Enemy* enemy : enemies_)
+	{
+		enemy->Update();
+	}
+
+	if (deathParticles_)
+	{
+		deathParticles_->Update();
+	}
+
+	if (deathParticles_ && deathParticles_->IsFinished())
+	{
+		finished_ = true;
+	}
+}
+
+void GameScene::ChangePhase()
+{
+	switch (phase_)
+	{
+	case Phase::kPlay:
+		if (player_->IsDead())
+		{
+			phase_ = Phase::kDeath;
+			delete deathParticles_;
+			deathParticles_ = new DeathParticles();
+			deathParticles_->Initialize(modelDeathParticles_, camera_, player_->GetWorldPosition());
+		}
+		break;
+	case Phase::kDeath:
+		break;
+	}
 }
 
 void GameScene::Draw() 
@@ -202,7 +252,10 @@ void GameScene::Draw()
 	skydome_->Draw(*camera_);
 
 	// プレイヤーの描画
-	player_->Draw(*camera_);
+	if (phase_ == Phase::kPlay)
+	{
+		player_->Draw(*camera_);
+	}
 
 	for (Enemy* enemy : enemies_)
 	{
@@ -211,7 +264,7 @@ void GameScene::Draw()
 
 	Model::PostDraw();
 
-	if (deathParticles_)
+	if (phase_ == Phase::kDeath && deathParticles_)
 	{
 		deathParticles_->Draw();
 	}

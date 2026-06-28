@@ -18,8 +18,15 @@ public:
 	void Initialize();
 	void Update();
 	void Draw();
+	bool IsFinished() const { return finished_; }
 
 private:
+	enum class Phase
+	{
+		kPlay,
+		kDeath,
+	};
+
 	KamataEngine::Model* modelBlock_ = nullptr;
 	std::vector<std::vector<KamataEngine::WorldTransform*>> worldTransformBlocks_;
 
@@ -43,7 +50,11 @@ private:
 	DeathParticles* deathParticles_ = nullptr;
 
 	MapChipField* mapChipField_ = nullptr;
+	Phase phase_ = Phase::kPlay;
+	bool finished_ = false;
 
 	void GenerateBlocks();
 	void CheckAllCollisions();
+	void ChangePhase();
+	void UpdateDeathPhase();
 };
