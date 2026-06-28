@@ -14,7 +14,7 @@ public:
 	/// <summary>
 	/// 初期化
 	/// </summary>
-	void Initialize(KamataEngine::Model* model, KamataEngine::Camera* camera, const KamataEngine::Vector3& position);
+	void Initialize(KamataEngine::Model* model, KamataEngine::Model* modelAttack, KamataEngine::Camera* camera, const KamataEngine::Vector3& position);
 
 	/// <summary>
 	/// 更新
@@ -85,8 +85,10 @@ private:
 
 	//モデル
 	KamataEngine::Model* model_ = nullptr;
+	KamataEngine::Model* modelAttack_ = nullptr;
 
 	KamataEngine::Vector3 velocity_ = {};
+	KamataEngine::WorldTransform worldTransformAttack_;
 
 	static inline const float kAcceleration = 0.01f;
 
@@ -108,6 +110,26 @@ private:
 	//設置状態フラグ
 	bool onGround_ = true;
 	bool isDead_ = false;
+	bool canAirAttack_ = true;
+
+	enum class Behavior
+	{
+		kUnknown = 0,
+		kRoot,
+		kAttack,
+	};
+
+	enum class AttackPhase
+	{
+		kCharge,
+		kThrust,
+		kRecovery,
+	};
+
+	Behavior behavior_ = Behavior::kRoot;
+	Behavior behaviorRequest_ = Behavior::kUnknown;
+	AttackPhase attackPhase_ = AttackPhase::kCharge;
+	uint32_t attackParameter_ = 0;
 
 	//重力加速度（下方向）
 	static inline const float kGravityAcceleration = 0.04f;
@@ -126,7 +148,19 @@ private:
 	static inline const float kHeight = 0.8f;
 	static inline const float kBlank = 0.01f;
 	static inline const float kCollisionMargin = 0.1f;
+	static inline const uint32_t kAttackChargeTime = 6;
+	static inline const uint32_t kAttackThrustTime = 16;
+	static inline const uint32_t kAttackRecoveryTime = 12;
+	static inline const float kAttackSpeed = 0.42f;
 
 	void MoveInput();
+	void UpdateBehaviorTransition();
+	void BehaviorRootInitialize();
+	void BehaviorRootUpdate();
+	void BehaviorAttackInitialize();
+	void BehaviorAttackUpdate();
+	void UpdateTurnAnimation();
+	void MoveByVelocity();
+	void UpdateAttackEffectTransform();
 
 };

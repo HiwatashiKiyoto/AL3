@@ -23,6 +23,7 @@ GameScene::~GameScene()
 	delete player_;
 
 	delete modelPlayer_;
+	delete modelAttack_;
 
 	for (Enemy* enemy : enemies_)
 	{
@@ -74,6 +75,8 @@ void GameScene::Initialize() {
 	// プレイヤーの生成
 	modelPlayer_ = Model::CreateFromOBJ("player", true);
 	assert(modelPlayer_);
+	modelAttack_ = Model::CreateSphere();
+	assert(modelAttack_);
 	player_ = new Player();
 
 	CameraController::Rect cameraArea = {0.0f, 100.0f, 0.0f, 100.0f};
@@ -81,7 +84,7 @@ void GameScene::Initialize() {
 
 	// 座標をマップチップ番号で指定
 	KamataEngine::Vector3 playerPosition = mapChipField_->GetMapChipPositionByIndex(1, 18);
-	player_->Initialize(modelPlayer_, camera_, playerPosition);
+	player_->Initialize(modelPlayer_, modelAttack_, camera_, playerPosition);
 
 	player_->SetMapChipField(mapChipField_);
 
@@ -93,8 +96,8 @@ void GameScene::Initialize() {
 	modelEnemy_ = Model::CreateFromOBJ("enemy", true);
 	assert(modelEnemy_);
 
-	const uint32_t enemyCount = 3;
-	const uint32_t enemyXIndices[enemyCount] = {7, 10, 13};
+	const uint32_t enemyCount = 1;
+	const uint32_t enemyXIndices[enemyCount] = {13};
 	for (uint32_t i = 0; i < enemyCount; ++i)
 	{
 		Enemy* newEnemy = new Enemy();

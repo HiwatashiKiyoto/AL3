@@ -8,15 +8,41 @@
 
 KamataEngine::Vector3 operator+(const KamataEngine::Vector3& v1, const KamataEngine::Vector3& v2) { return KamataEngine::Vector3{v1.x + v2.x, v1.y + v2.y, v1.z + v2.z}; }
 
-void Player::Initialize(KamataEngine::Model* model, KamataEngine::Camera* camera, const KamataEngine::Vector3& position)
+namespace
+{
+float EaseIn(float start, float end, float t)
+{
+	t = std::clamp(t, 0.0f, 1.0f);
+	return start + (end - start) * t * t;
+}
+
+float EaseOut(float start, float end, float t)
+{
+	t = std::clamp(t, 0.0f, 1.0f);
+	return start + (end - start) * (1.0f - (1.0f - t) * (1.0f - t));
+}
+}
+
+void Player::Initialize(KamataEngine::Model* model, KamataEngine::Model* modelAttack, KamataEngine::Camera* camera, const KamataEngine::Vector3& position)
 {
 	model_ = model;
+	modelAttack_ = modelAttack;
 	camera_ = camera;
 
 	worldTransform_.Initialize();
 	worldTransform_.translation_ = position;
 
 	worldTransform_.rotation_.y = std::numbers::pi_v<float> / 2.0f;
+	worldTransform_.scale_ = {1.0f, 1.0f, 1.0f};
+
+	worldTransformAttack_.Initialize();
+	worldTransformAttack_.scale_ = {0.0f, 0.0f, 0.0f};
+	UpdateAttackEffectTransform();
+
+	behavior_ = Behavior::kRoot;
+	behaviorRequest_ = Behavior::kUnknown;
+	canAirAttack_ = true;
+	attackParameter_ = 0;
 }
 
 void Player::Update()
@@ -26,15 +52,160 @@ void Player::Update()
 		return;
 	}
 
+	UpdateBehaviorTransition();
+
+	switch (behavior_)
+	{
+	case Behavior::kRoot:
+	default:
+		BehaviorRootUpdate();
+		break;
+	case Behavior::kAttack:
+		BehaviorAttackUpdate();
+		break;
+	}
+
+	UpdateTurnAnimation();
+	WorldTransformConfig(worldTransform_);
+	UpdateAttackEffectTransform();
+}
+
+void Player::BehaviorRootInitialize()
+{
+	worldTransform_.scale_ = {1.0f, 1.0f, 1.0f};
+	attackParameter_ = 0;
+}
+
+void Player::BehaviorRootUpdate()
+{
 	MoveInput();
 
+	if (KamataEngine::Input::GetInstance()->TriggerKey(DIK_SPACE))
+	{
+		if (onGround_ || canAirAttack_)
+		{
+			behaviorRequest_ = Behavior::kAttack;
+			if (!onGround_)
+			{
+				canAirAttack_ = false;
+			}
+		}
+	}
+
+	MoveByVelocity();
+}
+
+void Player::BehaviorAttackInitialize()
+{
+	attackPhase_ = AttackPhase::kCharge;
+	attackParameter_ = 0;
+	velocity_ = {};
+}
+
+void Player::BehaviorAttackUpdate()
+{
+	++attackParameter_;
+
+	switch (attackPhase_)
+	{
+	case AttackPhase::kCharge:
+	default:
+	{
+		float t = static_cast<float>(attackParameter_) / static_cast<float>(kAttackChargeTime);
+		worldTransform_.scale_.z = EaseOut(1.0f, 0.3f, t);
+		worldTransform_.scale_.y = EaseOut(1.0f, 1.6f, t);
+
+		if (attackParameter_ >= kAttackChargeTime)
+		{
+			attackPhase_ = AttackPhase::kThrust;
+			attackParameter_ = 0;
+		}
+		break;
+	}
+	case AttackPhase::kThrust:
+	{
+		float t = static_cast<float>(attackParameter_) / static_cast<float>(kAttackThrustTime);
+		worldTransform_.scale_.z = EaseOut(0.3f, 1.35f, t);
+		worldTransform_.scale_.y = EaseIn(1.6f, 0.7f, t);
+
+		KamataEngine::Vector3 attackVelocity = {};
+		if (lrDirection_ == LRDirection::kLeft)
+		{
+			attackVelocity.x = kAttackSpeed;
+		}
+		else
+		{
+			attackVelocity.x = -kAttackSpeed;
+		}
+
+		velocity_.x = attackVelocity.x;
+
+		if (attackParameter_ >= kAttackThrustTime)
+		{
+			attackPhase_ = AttackPhase::kRecovery;
+			attackParameter_ = 0;
+			velocity_.x = 0.0f;
+		}
+		break;
+	}
+	case AttackPhase::kRecovery:
+	{
+		float t = static_cast<float>(attackParameter_) / static_cast<float>(kAttackRecoveryTime);
+		worldTransform_.scale_.z = EaseOut(1.35f, 1.0f, t);
+		worldTransform_.scale_.y = EaseOut(0.7f, 1.0f, t);
+
+		if (attackParameter_ >= kAttackRecoveryTime)
+		{
+			worldTransform_.scale_ = {1.0f, 1.0f, 1.0f};
+			behaviorRequest_ = Behavior::kRoot;
+		}
+		break;
+	}
+	}
+
+	if (!onGround_)
+	{
+		velocity_.y = 0.0f;
+	}
+
+	MoveByVelocity();
+}
+
+void Player::UpdateBehaviorTransition()
+{
+	if (behaviorRequest_ == Behavior::kUnknown)
+	{
+		return;
+	}
+
+	behavior_ = behaviorRequest_;
+
+	switch (behavior_)
+	{
+	case Behavior::kRoot:
+	default:
+		BehaviorRootInitialize();
+		break;
+	case Behavior::kAttack:
+		BehaviorAttackInitialize();
+		break;
+	}
+
+	behaviorRequest_ = Behavior::kUnknown;
+}
+
+void Player::MoveByVelocity()
+{
 	CollisionMapInfo collisionMapInfo;
 	collisionMapInfo.move = velocity_;
 
 	CheckMapCollision(collisionMapInfo);
 	MoveByCollisionMapInfo(collisionMapInfo);
 	UpdateOnCollision(collisionMapInfo);
+}
 
+void Player::UpdateTurnAnimation()
+{
 	if (turnTimer_ > 0.0f)
 	{
 		turnTimer_ -= 1.0f / 60.0f;
@@ -54,15 +225,16 @@ void Player::Update()
 		float t = 1.0f - (turnTimer_ / kTimerTurn);
 		worldTransform_.rotation_.y = turnFirstRotationY_ + (destinationRotationY - turnFirstRotationY_) * t;
 	}
-
-	WorldTransformConfig(worldTransform_);
-
 }
 
 void Player::Draw(const KamataEngine::Camera& camera)
 {
 	KamataEngine::Model::PreDraw();
 	model_->Draw(worldTransform_, camera);
+	if (modelAttack_ && behavior_ == Behavior::kAttack && attackPhase_ != AttackPhase::kCharge)
+	{
+		modelAttack_->Draw(worldTransformAttack_, camera);
+	}
 	KamataEngine::Model::PostDraw();
 }
 
@@ -138,8 +310,45 @@ void Player::UpdateOnCollision(const CollisionMapInfo& info)
 			velocity_.x *= (1.0f - kAttenuationLanding);
 			velocity_.y = 0.0f;
 			onGround_ = true;
+			canAirAttack_ = true;
 		}
 	}
+}
+
+void Player::UpdateAttackEffectTransform()
+{
+	if (!modelAttack_)
+	{
+		return;
+	}
+
+	float direction = (lrDirection_ == LRDirection::kLeft) ? 1.0f : -1.0f;
+	worldTransformAttack_.translation_ = worldTransform_.translation_;
+	worldTransformAttack_.translation_.x += direction * 0.75f;
+	worldTransformAttack_.translation_.y += 0.05f;
+	worldTransformAttack_.rotation_ = worldTransform_.rotation_;
+
+	if (behavior_ == Behavior::kAttack && attackPhase_ != AttackPhase::kCharge)
+	{
+		float t = 0.0f;
+		if (attackPhase_ == AttackPhase::kThrust)
+		{
+			t = static_cast<float>(attackParameter_) / static_cast<float>(kAttackThrustTime);
+			worldTransformAttack_.scale_ = {0.25f + 0.35f * t, 0.45f, 0.45f};
+		}
+		else
+		{
+			t = static_cast<float>(attackParameter_) / static_cast<float>(kAttackRecoveryTime);
+			float scale = EaseOut(0.45f, 0.0f, t);
+			worldTransformAttack_.scale_ = {scale, scale, scale};
+		}
+	}
+	else
+	{
+		worldTransformAttack_.scale_ = {0.0f, 0.0f, 0.0f};
+	}
+
+	WorldTransformConfig(worldTransformAttack_);
 }
 
 void Player::CheckMapCollisionUp(CollisionMapInfo& info)
