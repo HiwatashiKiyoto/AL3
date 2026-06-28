@@ -66,7 +66,7 @@ void TitleScene::Update()
 	worldTransformBlock_.rotation_.y -= 0.012f;
 
 	WorldTransformConfig(worldTransformSkydome_);
-	WorldTransformConfig(worldTransformPlayer_);2q
+	WorldTransformConfig(worldTransformPlayer_);
 	WorldTransformConfig(worldTransformBlock_);
 	camera_->UpdateMatrix();
 }
