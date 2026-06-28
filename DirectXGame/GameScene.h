@@ -3,6 +3,7 @@
 #include "CameraController.h"
 #include "DeathParticles.h"
 #include "Enemy.h"
+#include "Fade.h"
 #include "KamataEngine.h"
 #include "MapChipField.h"
 #include "Player.h"
@@ -23,9 +24,13 @@ public:
 private:
 	enum class Phase
 	{
+		kFadeIn,
 		kPlay,
 		kDeath,
+		kFadeOut,
 	};
+
+	static inline const float kFadeDuration = 1.0f;
 
 	KamataEngine::Model* modelBlock_ = nullptr;
 	std::vector<std::vector<KamataEngine::WorldTransform*>> worldTransformBlocks_;
@@ -48,13 +53,16 @@ private:
 
 	KamataEngine::Model* modelDeathParticles_ = nullptr;
 	DeathParticles* deathParticles_ = nullptr;
+	Fade* fade_ = nullptr;
 
 	MapChipField* mapChipField_ = nullptr;
-	Phase phase_ = Phase::kPlay;
+	Phase phase_ = Phase::kFadeIn;
 	bool finished_ = false;
 
 	void GenerateBlocks();
 	void CheckAllCollisions();
 	void ChangePhase();
 	void UpdateDeathPhase();
+	void UpdateFadeInPhase();
+	void UpdateFadeOutPhase();
 };

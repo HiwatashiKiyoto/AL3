@@ -10,6 +10,7 @@ TitleScene::~TitleScene()
 {
 	delete spritePressSpace_;
 	delete spriteTitle_;
+	delete fade_;
 	delete modelBlock_;
 	delete modelPlayer_;
 	delete modelSkydome_;
@@ -32,6 +33,9 @@ void TitleScene::Initialize()
 	spriteTitle_->SetSize({760.0f, 160.0f});
 	spritePressSpace_ = Sprite::Create(textureHandlePressSpace_, {430.0f, 545.0f}, {1.0f, 1.0f, 1.0f, 1.0f});
 	spritePressSpace_->SetSize({420.0f, 70.0f});
+	fade_ = new Fade();
+	fade_->Initialize();
+	fade_->Start(Fade::Status::FadeIn, kFadeDuration);
 
 	worldTransformSkydome_.Initialize();
 
@@ -49,6 +53,7 @@ void TitleScene::Initialize()
 	WorldTransformConfig(worldTransformBlock_);
 
 	titleTimer_ = 0.0f;
+	phase_ = Phase::kFadeIn;
 	finished_ = false;
 }
 
@@ -56,9 +61,30 @@ void TitleScene::Update()
 {
 	titleTimer_ += 1.0f / 60.0f;
 
-	if (Input::GetInstance()->PushKey(DIK_SPACE))
+	switch (phase_)
 	{
-		finished_ = true;
+	case Phase::kFadeIn:
+		fade_->Update();
+		if (fade_->IsFinished())
+		{
+			fade_->Stop();
+			phase_ = Phase::kMain;
+		}
+		break;
+	case Phase::kMain:
+		if (Input::GetInstance()->PushKey(DIK_SPACE))
+		{
+			phase_ = Phase::kFadeOut;
+			fade_->Start(Fade::Status::FadeOut, kFadeDuration);
+		}
+		break;
+	case Phase::kFadeOut:
+		fade_->Update();
+		if (fade_->IsFinished())
+		{
+			finished_ = true;
+		}
+		break;
 	}
 
 	worldTransformPlayer_.translation_.y = -0.7f + std::sin(titleTimer_ * 2.2f) * 0.18f;
@@ -83,4 +109,6 @@ void TitleScene::Draw()
 	spriteTitle_->Draw();
 	spritePressSpace_->Draw();
 	Sprite::PostDraw();
+
+	fade_->Draw();
 }

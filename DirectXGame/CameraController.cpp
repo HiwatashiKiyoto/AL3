@@ -59,4 +59,6 @@ void CameraController::Reset()
 		camera_->translation_.y = targetWorldTransform.translation_.y + targetOffset_.y;
 		camera_->translation_.z = targetWorldTransform.translation_.z + targetOffset_.z;
 	}
+
+	camera_->UpdateMatrix();
 }

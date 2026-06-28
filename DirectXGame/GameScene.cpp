@@ -34,6 +34,7 @@ GameScene::~GameScene()
 
 	delete deathParticles_;
 	delete modelDeathParticles_;
+	delete fade_;
 
 	delete mapChipField_;
 
@@ -75,11 +76,6 @@ void GameScene::Initialize() {
 	assert(modelPlayer_);
 	player_ = new Player();
 
-	// 追従対象をプレイヤーに設定
-	cameraController_->SetTarget(player_); 
-	// カメラをプレイヤーの背後に配置
-	cameraController_->Reset();      
-
 	CameraController::Rect cameraArea = {0.0f, 100.0f, 0.0f, 100.0f};
 	cameraController_->SetMovableArea(cameraArea);
 
@@ -88,6 +84,11 @@ void GameScene::Initialize() {
 	player_->Initialize(modelPlayer_, camera_, playerPosition);
 
 	player_->SetMapChipField(mapChipField_);
+
+	// プレイヤーの初期座標が決まってからカメラを合わせる
+	cameraController_->SetTarget(player_);
+	cameraController_->Reset();
+	camera_ = cameraController_->GetCamera();
 
 	modelEnemy_ = Model::CreateFromOBJ("enemy", true);
 	assert(modelEnemy_);
@@ -106,17 +107,35 @@ void GameScene::Initialize() {
 	modelDeathParticles_ = Model::CreateSphere();
 	assert(modelDeathParticles_);
 	deathParticles_ = nullptr;
-	phase_ = Phase::kPlay;
+	fade_ = new Fade();
+	fade_->Initialize();
+	fade_->Start(Fade::Status::FadeIn, kFadeDuration);
+	phase_ = Phase::kFadeIn;
 	finished_ = false;
 }
 
 void GameScene::Update() {
+	if (phase_ == Phase::kFadeIn)
+	{
+		UpdateFadeInPhase();
+		ChangePhase();
+		return;
+	}
+
 	if (phase_ == Phase::kDeath)
 	{
 		UpdateDeathPhase();
 		ChangePhase();
 		return;
 	}
+
+	if (phase_ == Phase::kFadeOut)
+	{
+		UpdateFadeOutPhase();
+		ChangePhase();
+		return;
+	}
+
 	// ブロックの更新
 	for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) 
 	{
@@ -210,6 +229,43 @@ void GameScene::UpdateDeathPhase()
 
 	if (deathParticles_ && deathParticles_->IsFinished())
 	{
+		phase_ = Phase::kFadeOut;
+		fade_->Start(Fade::Status::FadeOut, kFadeDuration);
+	}
+}
+
+void GameScene::UpdateFadeInPhase()
+{
+	for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_)
+	{
+		for (WorldTransform* worldTransformBlock : worldTransformBlockLine)
+		{
+			if (!worldTransformBlock)
+			{
+				continue;
+			}
+
+			WorldTransformConfig(*worldTransformBlock);
+		}
+	}
+
+	cameraController_->Update();
+	camera_ = cameraController_->GetCamera();
+	skydome_->Update();
+
+	fade_->Update();
+	if (fade_->IsFinished())
+	{
+		fade_->Stop();
+		phase_ = Phase::kPlay;
+	}
+}
+
+void GameScene::UpdateFadeOutPhase()
+{
+	fade_->Update();
+	if (fade_->IsFinished())
+	{
 		finished_ = true;
 	}
 }
@@ -218,6 +274,8 @@ void GameScene::ChangePhase()
 {
 	switch (phase_)
 	{
+	case Phase::kFadeIn:
+		break;
 	case Phase::kPlay:
 		if (player_->IsDead())
 		{
@@ -228,6 +286,8 @@ void GameScene::ChangePhase()
 		}
 		break;
 	case Phase::kDeath:
+		break;
+	case Phase::kFadeOut:
 		break;
 	}
 }
@@ -252,7 +312,7 @@ void GameScene::Draw()
 	skydome_->Draw(*camera_);
 
 	// プレイヤーの描画
-	if (phase_ == Phase::kPlay)
+	if (phase_ == Phase::kFadeIn || phase_ == Phase::kPlay)
 	{
 		player_->Draw(*camera_);
 	}
@@ -268,6 +328,8 @@ void GameScene::Draw()
 	{
 		deathParticles_->Draw();
 	}
+
+	fade_->Draw();
 }
 
 void GameScene::CheckAllCollisions()
@@ -311,6 +373,7 @@ void GameScene::GenerateBlocks()
 				worldTransform->Initialize();
 				worldTransformBlocks_[i][j] = worldTransform;
 				worldTransformBlocks_[i][j]->translation_ = mapChipField_->GetMapChipPositionByIndex(j, i);
+				WorldTransformConfig(*worldTransformBlocks_[i][j]);
 			}
 		}
 	}
