@@ -6,7 +6,6 @@ using namespace KamataEngine;
 
 GameScene::~GameScene() 
 {
-	delete modelBlock_;
 	for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_)
 	{
 		for (WorldTransform* worldTransformBlock : worldTransformBlockLine) 
@@ -15,9 +14,11 @@ GameScene::~GameScene()
 		}
 	}
 	worldTransformBlocks_.clear();
+	delete modelBlock_;
 
 	delete debugCamera_;
 
+	delete skydome_;
 	delete modelSkydome_;
 
 	delete player_;
@@ -32,6 +33,15 @@ GameScene::~GameScene()
 	enemies_.clear();
 
 	delete modelEnemy_;
+
+	for (HitEffect* hitEffect : hitEffects_)
+	{
+		delete hitEffect;
+	}
+	hitEffects_.clear();
+	HitEffect::SetModel(nullptr);
+	HitEffect::SetCamera(nullptr);
+	delete modelHitEffect_;
 
 	delete deathParticles_;
 	delete modelDeathParticles_;
@@ -96,6 +106,11 @@ void GameScene::Initialize() {
 	modelEnemy_ = Model::CreateFromOBJ("enemy", true);
 	assert(modelEnemy_);
 
+	modelHitEffect_ = Model::CreateFromOBJ("hitEffect", true);
+	assert(modelHitEffect_);
+	HitEffect::SetModel(modelHitEffect_);
+	HitEffect::SetCamera(camera_);
+
 	const uint32_t enemyCount = 1;
 	const uint32_t enemyXIndices[enemyCount] = {13};
 	for (uint32_t i = 0; i < enemyCount; ++i)
@@ -104,6 +119,7 @@ void GameScene::Initialize() {
 		KamataEngine::Vector3 enemyPosition = mapChipField_->GetMapChipPositionByIndex(enemyXIndices[i], 19);
 		enemyPosition.y = mapChipField_->GetRectByIndex(enemyXIndices[i], 19).top + Enemy::GetGroundOffset();
 		newEnemy->Initialize(modelEnemy_, camera_, enemyPosition);
+		newEnemy->SetGameScene(this);
 		enemies_.push_back(newEnemy);
 	}
 
@@ -199,8 +215,14 @@ void GameScene::Update() {
 		deathParticles_->Update();
 	}
 
+	for (HitEffect* hitEffect : hitEffects_)
+	{
+		hitEffect->Update();
+	}
+
 	CheckAllCollisions();
 	RemoveDeadEnemies();
+	RemoveDeadHitEffects();
 	ChangePhase();
 }
 
@@ -230,6 +252,12 @@ void GameScene::UpdateDeathPhase()
 	{
 		deathParticles_->Update();
 	}
+
+	for (HitEffect* hitEffect : hitEffects_)
+	{
+		hitEffect->Update();
+	}
+	RemoveDeadHitEffects();
 
 	if (deathParticles_ && deathParticles_->IsFinished())
 	{
@@ -328,6 +356,11 @@ void GameScene::Draw()
 
 	Model::PostDraw();
 
+	for (HitEffect* hitEffect : hitEffects_)
+	{
+		hitEffect->Draw();
+	}
+
 	if (phase_ == Phase::kDeath && deathParticles_)
 	{
 		deathParticles_->Draw();
@@ -368,6 +401,26 @@ void GameScene::RemoveDeadEnemies()
 
 		return false;
 	});
+}
+
+void GameScene::RemoveDeadHitEffects()
+{
+	hitEffects_.remove_if([](HitEffect* hitEffect)
+	{
+		if (hitEffect->IsDead())
+		{
+			delete hitEffect;
+			return true;
+		}
+
+		return false;
+	});
+}
+
+void GameScene::CreateHitEffect(const Vector3& position)
+{
+	HitEffect* newHitEffect = HitEffect::Create(position);
+	hitEffects_.push_back(newHitEffect);
 }
 
 void GameScene::GenerateBlocks()

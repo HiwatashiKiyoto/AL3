@@ -4,6 +4,7 @@
 #include "DeathParticles.h"
 #include "Enemy.h"
 #include "Fade.h"
+#include "HitEffect.h"
 #include "KamataEngine.h"
 #include "MapChipField.h"
 #include "Player.h"
@@ -20,6 +21,7 @@ public:
 	void Update();
 	void Draw();
 	bool IsFinished() const { return finished_; }
+	void CreateHitEffect(const KamataEngine::Vector3& position);
 
 private:
 	enum class Phase
@@ -52,6 +54,9 @@ private:
 	KamataEngine::Model* modelEnemy_ = nullptr;
 	std::list<Enemy*> enemies_;
 
+	KamataEngine::Model* modelHitEffect_ = nullptr;
+	std::list<HitEffect*> hitEffects_;
+
 	KamataEngine::Model* modelDeathParticles_ = nullptr;
 	DeathParticles* deathParticles_ = nullptr;
 	Fade* fade_ = nullptr;
@@ -63,6 +68,7 @@ private:
 	void GenerateBlocks();
 	void CheckAllCollisions();
 	void RemoveDeadEnemies();
+	void RemoveDeadHitEffects();
 	void ChangePhase();
 	void UpdateDeathPhase();
 	void UpdateFadeInPhase();

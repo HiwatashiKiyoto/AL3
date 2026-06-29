@@ -1,5 +1,6 @@
 #define NOMINMAX
 #include "Enemy.h"
+#include "GameScene.h"
 #include "Player.h"
 #include "WorldTransformConfig.h"
 #include <algorithm>
@@ -160,5 +161,15 @@ void Enemy::OnCollision(const Player* player)
 	if (player && player->IsAttack())
 	{
 		behaviorRequest_ = Behavior::kDeath;
+		if (gameScene_)
+		{
+			Vector3 enemyPosition = GetWorldPosition();
+			Vector3 playerPosition = player->GetWorldPosition();
+			Vector3 effectPosition = {
+			    (enemyPosition.x + playerPosition.x) / 2.0f,
+			    (enemyPosition.y + playerPosition.y) / 2.0f,
+			    (enemyPosition.z + playerPosition.z) / 2.0f};
+			gameScene_->CreateHitEffect(effectPosition);
+		}
 	}
 }

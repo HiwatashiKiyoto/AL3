@@ -4,6 +4,7 @@
 #include "KamataEngine.h"
 
 class Player;
+class GameScene;
 
 /// <summary>
 /// Enemy
@@ -17,6 +18,7 @@ public:
 	KamataEngine::Vector3 GetWorldPosition() const;
 	AABB GetAABB() const;
 	void OnCollision(const Player* player);
+	void SetGameScene(GameScene* gameScene) { gameScene_ = gameScene; }
 	bool IsDead() const { return isDead_; }
 	bool IsCollisionDisabled() const { return isCollisionDisabled_; }
 
@@ -33,6 +35,7 @@ private:
 	KamataEngine::WorldTransform worldTransform_;
 	KamataEngine::Model* model_ = nullptr;
 	KamataEngine::Camera* camera_ = nullptr;
+	GameScene* gameScene_ = nullptr;
 	KamataEngine::Vector3 velocity_ = {};
 	Behavior behavior_ = Behavior::kWalk;
 	Behavior behaviorRequest_ = Behavior::kUnknown;
