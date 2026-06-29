@@ -23,6 +23,7 @@ public:
 	void Update();
 	void Draw();
 	bool IsFinished() const { return finished_; }
+	bool IsReloadRequested() const { return reloadRequested_; }
 	void CreateHitEffect(const KamataEngine::Vector3& position);
 	void CreateGuardEffect(const KamataEngine::Vector3& position);
 
@@ -71,8 +72,13 @@ private:
 	MapChipField* mapChipField_ = nullptr;
 	Phase phase_ = Phase::kFadeIn;
 	bool finished_ = false;
+	bool reloadRequested_ = false;
 
-	void GenerateBlocks();
+	void GenerateFieldObjects();
+	void GenerateBlock(uint32_t xIndex, uint32_t yIndex);
+	void GeneratePlayer(uint32_t xIndex, uint32_t yIndex);
+	void GenerateEnemy(uint32_t xIndex, uint32_t yIndex, uint8_t subID);
+	void ClearFieldObjects();
 	void CheckAllCollisions();
 	void RemoveDeadEnemies();
 	void RemoveDeadHitEffects();

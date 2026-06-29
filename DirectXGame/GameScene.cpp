@@ -1,19 +1,13 @@
 #include "GameScene.h"
 #include "WorldTransformConfig.h"
 #include <cassert>
+#include <imgui.h>
 
 using namespace KamataEngine;
 
 GameScene::~GameScene() 
 {
-	for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_)
-	{
-		for (WorldTransform* worldTransformBlock : worldTransformBlockLine) 
-		{
-			delete worldTransformBlock;
-		}
-	}
-	worldTransformBlocks_.clear();
+	ClearFieldObjects();
 	delete modelBlock_;
 
 	delete debugCamera_;
@@ -21,24 +15,10 @@ GameScene::~GameScene()
 	delete skydome_;
 	delete modelSkydome_;
 
-	delete player_;
-
 	delete modelPlayer_;
 	delete modelAttack_;
 
-	for (Enemy* enemy : enemies_)
-	{
-		delete enemy;
-	}
-	enemies_.clear();
-
 	delete modelEnemy_;
-
-	for (ShieldEnemy* shieldEnemy : shieldEnemies_)
-	{
-		delete shieldEnemy;
-	}
-	shieldEnemies_.clear();
 
 	delete modelShieldEnemy_;
 
@@ -97,29 +77,18 @@ void GameScene::Initialize() {
 	// マップチップフィールド
 	mapChipField_ = new MapChipField;
 	mapChipField_->LoadMapChipCsv("Resources/mapChip.csv");
-	GenerateBlocks();
 
 	// プレイヤーの生成
 	modelPlayer_ = Model::CreateFromOBJ("player", true);
 	assert(modelPlayer_);
 	modelAttack_ = Model::CreateSphere();
 	assert(modelAttack_);
-	player_ = new Player();
 
 	CameraController::Rect cameraArea = {0.0f, 100.0f, 0.0f, 100.0f};
 	cameraController_->SetMovableArea(cameraArea);
 
 	// 座標をマップチップ番号で指定
-	KamataEngine::Vector3 playerPosition = mapChipField_->GetMapChipPositionByIndex(1, 18);
-	player_->Initialize(modelPlayer_, modelAttack_, camera_, playerPosition);
-
-	player_->SetMapChipField(mapChipField_);
-
 	// プレイヤーの初期座標が決まってからカメラを合わせる
-	cameraController_->SetTarget(player_);
-	cameraController_->Reset();
-	camera_ = cameraController_->GetCamera();
-
 	modelEnemy_ = Model::CreateFromOBJ("enemy", true);
 	assert(modelEnemy_);
 
@@ -133,32 +102,18 @@ void GameScene::Initialize() {
 	GuardEffect::SetModel(modelGuardEffect_);
 	GuardEffect::SetCamera(camera_);
 
-	const uint32_t enemyCount = 1;
-	const uint32_t enemyXIndices[enemyCount] = {13};
-	for (uint32_t i = 0; i < enemyCount; ++i)
-	{
-		Enemy* newEnemy = new Enemy();
-		KamataEngine::Vector3 enemyPosition = mapChipField_->GetMapChipPositionByIndex(enemyXIndices[i], 19);
-		enemyPosition.y = mapChipField_->GetRectByIndex(enemyXIndices[i], 19).top + Enemy::GetGroundOffset();
-		newEnemy->Initialize(modelEnemy_, camera_, enemyPosition);
-		newEnemy->SetGameScene(this);
-		enemies_.push_back(newEnemy);
-	}
-
 	modelShieldEnemy_ = Model::CreateFromOBJ("Yeti", true);
 	assert(modelShieldEnemy_);
 
-	const uint32_t shieldEnemyCount = 1;
-	const uint32_t shieldEnemyXIndices[shieldEnemyCount] = {18};
-	for (uint32_t i = 0; i < shieldEnemyCount; ++i)
+	GenerateFieldObjects();
+	if (!player_)
 	{
-		ShieldEnemy* newShieldEnemy = new ShieldEnemy();
-		KamataEngine::Vector3 shieldEnemyPosition = mapChipField_->GetMapChipPositionByIndex(shieldEnemyXIndices[i], 19);
-		shieldEnemyPosition.y = mapChipField_->GetRectByIndex(shieldEnemyXIndices[i], 19).top + ShieldEnemy::GetGroundOffset();
-		newShieldEnemy->Initialize(modelShieldEnemy_, camera_, shieldEnemyPosition);
-		newShieldEnemy->SetGameScene(this);
-		shieldEnemies_.push_back(newShieldEnemy);
+		GeneratePlayer(1, 18);
 	}
+
+	cameraController_->SetTarget(player_);
+	cameraController_->Reset();
+	camera_ = cameraController_->GetCamera();
 
 	modelDeathParticles_ = Model::CreateSphere();
 	assert(modelDeathParticles_);
@@ -168,6 +123,7 @@ void GameScene::Initialize() {
 	fade_->Start(Fade::Status::FadeIn, kFadeDuration);
 	phase_ = Phase::kFadeIn;
 	finished_ = false;
+	reloadRequested_ = false;
 }
 
 void GameScene::Update() {
@@ -193,6 +149,15 @@ void GameScene::Update() {
 	}
 
 	// ブロックの更新
+#ifdef _DEBUG
+	ImGui::Begin("Stage");
+	if (ImGui::Button("Reload"))
+	{
+		reloadRequested_ = true;
+	}
+	ImGui::End();
+#endif
+
 	for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_) 
 	{
 		for (WorldTransform* worldTransformBlock : worldTransformBlockLine) 
@@ -541,10 +506,12 @@ void GameScene::CreateGuardEffect(const Vector3& position)
 	guardEffects_.push_back(newGuardEffect);
 }
 
-void GameScene::GenerateBlocks()
+void GameScene::GenerateFieldObjects()
 {
 
 	// 要素数
+	ClearFieldObjects();
+
 	uint32_t kNumBlockVirtical = mapChipField_->GetNumBlockVirtical();
 	uint32_t kNumBlockHorizontal = mapChipField_->GetNumBlockHorizontal();
 
@@ -561,14 +528,97 @@ void GameScene::GenerateBlocks()
 	{
 		for (uint32_t j = 0; j < kNumBlockHorizontal; ++j) 
 		{
-			if (mapChipField_->GetMapChipTypeByIndex(j, i) == MapChipType::kBlock)
+			MapChipType mapChipType = mapChipField_->GetMapChipTypeByIndex(j, i);
+			switch (mapChipType)
 			{
-				WorldTransform* worldTransform = new WorldTransform();
-				worldTransform->Initialize();
-				worldTransformBlocks_[i][j] = worldTransform;
-				worldTransformBlocks_[i][j]->translation_ = mapChipField_->GetMapChipPositionByIndex(j, i);
-				WorldTransformConfig(*worldTransformBlocks_[i][j]);
+			case MapChipType::kBlock:
+				GenerateBlock(j, i);
+				break;
+			case MapChipType::kPlayer:
+				GeneratePlayer(j, i);
+				break;
+			case MapChipType::kEnemy:
+				GenerateEnemy(j, i, mapChipField_->GetMapChipSubIDByIndex(j, i));
+				break;
+			case MapChipType::kBlank:
+			default:
+				break;
 			}
 		}
 	}
+}
+
+void GameScene::GenerateBlock(uint32_t xIndex, uint32_t yIndex)
+{
+	WorldTransform* worldTransform = new WorldTransform();
+	worldTransform->Initialize();
+	worldTransform->translation_ = mapChipField_->GetMapChipPositionByIndex(xIndex, yIndex);
+	worldTransformBlocks_[yIndex][xIndex] = worldTransform;
+	WorldTransformConfig(*worldTransformBlocks_[yIndex][xIndex]);
+}
+
+void GameScene::GeneratePlayer(uint32_t xIndex, uint32_t yIndex)
+{
+	assert(player_ == nullptr && "Player is already generated.");
+
+	player_ = new Player();
+	Vector3 playerPosition = mapChipField_->GetMapChipPositionByIndex(xIndex, yIndex);
+	player_->Initialize(modelPlayer_, modelAttack_, camera_, playerPosition);
+	player_->SetMapChipField(mapChipField_);
+}
+
+void GameScene::GenerateEnemy(uint32_t xIndex, uint32_t yIndex, uint8_t subID)
+{
+	switch (subID)
+	{
+	case 0:
+	{
+		Enemy* newEnemy = new Enemy();
+		Vector3 enemyPosition = mapChipField_->GetMapChipPositionByIndex(xIndex, yIndex);
+		enemyPosition.y = mapChipField_->GetRectByIndex(xIndex, yIndex).bottom + Enemy::GetGroundOffset();
+		newEnemy->Initialize(modelEnemy_, camera_, enemyPosition);
+		newEnemy->SetGameScene(this);
+		enemies_.push_back(newEnemy);
+		break;
+	}
+	case 1:
+	{
+		ShieldEnemy* newShieldEnemy = new ShieldEnemy();
+		Vector3 shieldEnemyPosition = mapChipField_->GetMapChipPositionByIndex(xIndex, yIndex);
+		shieldEnemyPosition.y = mapChipField_->GetRectByIndex(xIndex, yIndex).bottom + ShieldEnemy::GetGroundOffset();
+		newShieldEnemy->Initialize(modelShieldEnemy_, camera_, shieldEnemyPosition);
+		newShieldEnemy->SetGameScene(this);
+		shieldEnemies_.push_back(newShieldEnemy);
+		break;
+	}
+	default:
+		break;
+	}
+}
+
+void GameScene::ClearFieldObjects()
+{
+	for (std::vector<WorldTransform*>& worldTransformBlockLine : worldTransformBlocks_)
+	{
+		for (WorldTransform* worldTransformBlock : worldTransformBlockLine)
+		{
+			delete worldTransformBlock;
+		}
+	}
+	worldTransformBlocks_.clear();
+
+	delete player_;
+	player_ = nullptr;
+
+	for (Enemy* enemy : enemies_)
+	{
+		delete enemy;
+	}
+	enemies_.clear();
+
+	for (ShieldEnemy* shieldEnemy : shieldEnemies_)
+	{
+		delete shieldEnemy;
+	}
+	shieldEnemies_.clear();
 }

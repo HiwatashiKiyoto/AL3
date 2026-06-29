@@ -37,6 +37,13 @@ void ChangeScene()
 			titleScene = new TitleScene();
 			titleScene->Initialize();
 		}
+		else if (gameScene->IsReloadRequested())
+		{
+			delete gameScene;
+			gameScene = nullptr;
+			gameScene = new GameScene();
+			gameScene->Initialize();
+		}
 		break;
 	default:
 		break;
@@ -101,14 +108,23 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 		}
 
 		//ゲームシーンの更新
+#ifdef _DEBUG
+		ImGuiManager::GetInstance()->Begin();
+#endif
 		UpdateScene();
 		ChangeScene();
+#ifdef _DEBUG
+		ImGuiManager::GetInstance()->End();
+#endif
 
 		//描画開始
 		dxCommon->PreDraw();
 
 		//ゲームシーンの描画
 		DrawScene();
+#ifdef _DEBUG
+		ImGuiManager::GetInstance()->Draw();
+#endif
 
 		//描画終了
 		dxCommon->PostDraw();
