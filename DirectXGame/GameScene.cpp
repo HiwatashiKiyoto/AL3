@@ -34,6 +34,14 @@ GameScene::~GameScene()
 
 	delete modelEnemy_;
 
+	for (ShieldEnemy* shieldEnemy : shieldEnemies_)
+	{
+		delete shieldEnemy;
+	}
+	shieldEnemies_.clear();
+
+	delete modelShieldEnemy_;
+
 	for (HitEffect* hitEffect : hitEffects_)
 	{
 		delete hitEffect;
@@ -42,6 +50,15 @@ GameScene::~GameScene()
 	HitEffect::SetModel(nullptr);
 	HitEffect::SetCamera(nullptr);
 	delete modelHitEffect_;
+
+	for (GuardEffect* guardEffect : guardEffects_)
+	{
+		delete guardEffect;
+	}
+	guardEffects_.clear();
+	GuardEffect::SetModel(nullptr);
+	GuardEffect::SetCamera(nullptr);
+	delete modelGuardEffect_;
 
 	delete deathParticles_;
 	delete modelDeathParticles_;
@@ -111,6 +128,11 @@ void GameScene::Initialize() {
 	HitEffect::SetModel(modelHitEffect_);
 	HitEffect::SetCamera(camera_);
 
+	modelGuardEffect_ = Model::CreateFromOBJ("guardEffect", true);
+	assert(modelGuardEffect_);
+	GuardEffect::SetModel(modelGuardEffect_);
+	GuardEffect::SetCamera(camera_);
+
 	const uint32_t enemyCount = 1;
 	const uint32_t enemyXIndices[enemyCount] = {13};
 	for (uint32_t i = 0; i < enemyCount; ++i)
@@ -121,6 +143,21 @@ void GameScene::Initialize() {
 		newEnemy->Initialize(modelEnemy_, camera_, enemyPosition);
 		newEnemy->SetGameScene(this);
 		enemies_.push_back(newEnemy);
+	}
+
+	modelShieldEnemy_ = Model::CreateFromOBJ("Yeti", true);
+	assert(modelShieldEnemy_);
+
+	const uint32_t shieldEnemyCount = 1;
+	const uint32_t shieldEnemyXIndices[shieldEnemyCount] = {18};
+	for (uint32_t i = 0; i < shieldEnemyCount; ++i)
+	{
+		ShieldEnemy* newShieldEnemy = new ShieldEnemy();
+		KamataEngine::Vector3 shieldEnemyPosition = mapChipField_->GetMapChipPositionByIndex(shieldEnemyXIndices[i], 19);
+		shieldEnemyPosition.y = mapChipField_->GetRectByIndex(shieldEnemyXIndices[i], 19).top + ShieldEnemy::GetGroundOffset();
+		newShieldEnemy->Initialize(modelShieldEnemy_, camera_, shieldEnemyPosition);
+		newShieldEnemy->SetGameScene(this);
+		shieldEnemies_.push_back(newShieldEnemy);
 	}
 
 	modelDeathParticles_ = Model::CreateSphere();
@@ -210,6 +247,11 @@ void GameScene::Update() {
 		enemy->Update();
 	}
 
+	for (ShieldEnemy* shieldEnemy : shieldEnemies_)
+	{
+		shieldEnemy->Update();
+	}
+
 	if (deathParticles_)
 	{
 		deathParticles_->Update();
@@ -220,9 +262,16 @@ void GameScene::Update() {
 		hitEffect->Update();
 	}
 
+	for (GuardEffect* guardEffect : guardEffects_)
+	{
+		guardEffect->Update();
+	}
+
 	CheckAllCollisions();
 	RemoveDeadEnemies();
+	RemoveDeadShieldEnemies();
 	RemoveDeadHitEffects();
+	RemoveDeadGuardEffects();
 	ChangePhase();
 }
 
@@ -248,6 +297,11 @@ void GameScene::UpdateDeathPhase()
 		enemy->Update();
 	}
 
+	for (ShieldEnemy* shieldEnemy : shieldEnemies_)
+	{
+		shieldEnemy->Update();
+	}
+
 	if (deathParticles_)
 	{
 		deathParticles_->Update();
@@ -257,7 +311,12 @@ void GameScene::UpdateDeathPhase()
 	{
 		hitEffect->Update();
 	}
+	for (GuardEffect* guardEffect : guardEffects_)
+	{
+		guardEffect->Update();
+	}
 	RemoveDeadHitEffects();
+	RemoveDeadGuardEffects();
 
 	if (deathParticles_ && deathParticles_->IsFinished())
 	{
@@ -354,11 +413,21 @@ void GameScene::Draw()
 		enemy->Draw(*camera_);
 	}
 
+	for (ShieldEnemy* shieldEnemy : shieldEnemies_)
+	{
+		shieldEnemy->Draw(*camera_);
+	}
+
 	Model::PostDraw();
 
 	for (HitEffect* hitEffect : hitEffects_)
 	{
 		hitEffect->Draw();
+	}
+
+	for (GuardEffect* guardEffect : guardEffects_)
+	{
+		guardEffect->Draw();
 	}
 
 	if (phase_ == Phase::kDeath && deathParticles_)
@@ -387,6 +456,21 @@ void GameScene::CheckAllCollisions()
 			enemy->OnCollision(player_);
 		}
 	}
+
+	for (ShieldEnemy* shieldEnemy : shieldEnemies_)
+	{
+		if (shieldEnemy->IsCollisionDisabled())
+		{
+			continue;
+		}
+
+		AABB shieldEnemyAABB = shieldEnemy->GetAABB();
+		if (IsCollision(playerAABB, shieldEnemyAABB))
+		{
+			player_->OnCollision(nullptr);
+			shieldEnemy->OnCollision(player_);
+		}
+	}
 }
 
 void GameScene::RemoveDeadEnemies()
@@ -396,6 +480,20 @@ void GameScene::RemoveDeadEnemies()
 		if (enemy->IsDead())
 		{
 			delete enemy;
+			return true;
+		}
+
+		return false;
+	});
+}
+
+void GameScene::RemoveDeadShieldEnemies()
+{
+	shieldEnemies_.remove_if([](ShieldEnemy* shieldEnemy)
+	{
+		if (shieldEnemy->IsDead())
+		{
+			delete shieldEnemy;
 			return true;
 		}
 
@@ -417,10 +515,30 @@ void GameScene::RemoveDeadHitEffects()
 	});
 }
 
+void GameScene::RemoveDeadGuardEffects()
+{
+	guardEffects_.remove_if([](GuardEffect* guardEffect)
+	{
+		if (guardEffect->IsDead())
+		{
+			delete guardEffect;
+			return true;
+		}
+
+		return false;
+	});
+}
+
 void GameScene::CreateHitEffect(const Vector3& position)
 {
 	HitEffect* newHitEffect = HitEffect::Create(position);
 	hitEffects_.push_back(newHitEffect);
+}
+
+void GameScene::CreateGuardEffect(const Vector3& position)
+{
+	GuardEffect* newGuardEffect = GuardEffect::Create(position);
+	guardEffects_.push_back(newGuardEffect);
 }
 
 void GameScene::GenerateBlocks()

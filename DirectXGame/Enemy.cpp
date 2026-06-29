@@ -164,11 +164,10 @@ void Enemy::OnCollision(const Player* player)
 		if (gameScene_)
 		{
 			Vector3 enemyPosition = GetWorldPosition();
-			Vector3 playerPosition = player->GetWorldPosition();
 			Vector3 effectPosition = {
-			    (enemyPosition.x + playerPosition.x) / 2.0f,
-			    (enemyPosition.y + playerPosition.y) / 2.0f,
-			    (enemyPosition.z + playerPosition.z) / 2.0f};
+			    enemyPosition.x,
+			    enemyPosition.y + kHeight / 2.0f,
+			    enemyPosition.z};
 			gameScene_->CreateHitEffect(effectPosition);
 		}
 	}

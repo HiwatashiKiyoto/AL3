@@ -35,6 +35,8 @@ public:
 	void OnCollision(const Enemy* enemy);
 	bool IsDead() const { return isDead_; }
 	bool IsAttack() const { return behavior_ == Behavior::kAttack; }
+	bool IsFacingRight() const { return lrDirection_ == LRDirection::kLeft; }
+	void RequestKnockback() { isKnockbackRequested_ = true; }
 
 	void SetMapChipField(MapChipField* mapChipField) { mapChipField_ = mapChipField; }
 
@@ -118,6 +120,7 @@ private:
 		kUnknown = 0,
 		kRoot,
 		kAttack,
+		kKnockback,
 	};
 
 	enum class AttackPhase
@@ -131,6 +134,8 @@ private:
 	Behavior behaviorRequest_ = Behavior::kUnknown;
 	AttackPhase attackPhase_ = AttackPhase::kCharge;
 	uint32_t attackParameter_ = 0;
+	bool isKnockbackRequested_ = false;
+	uint32_t knockbackParameter_ = 0;
 
 	//重力加速度（下方向）
 	static inline const float kGravityAcceleration = 0.04f;
@@ -153,6 +158,9 @@ private:
 	static inline const uint32_t kAttackThrustTime = 16;
 	static inline const uint32_t kAttackRecoveryTime = 12;
 	static inline const float kAttackSpeed = 0.42f;
+	static inline const uint32_t kKnockbackTime = 28;
+	static inline const float kKnockbackSpeed = 0.18f;
+	static inline const float kKnockbackJumpSpeed = 0.25f;
 
 	void MoveInput();
 	void UpdateBehaviorTransition();
@@ -160,6 +168,8 @@ private:
 	void BehaviorRootUpdate();
 	void BehaviorAttackInitialize();
 	void BehaviorAttackUpdate();
+	void BehaviorKnockbackInitialize();
+	void BehaviorKnockbackUpdate();
 	void UpdateTurnAnimation();
 	void MoveByVelocity();
 	void UpdateAttackEffectTransform();

@@ -52,6 +52,12 @@ void Player::Update()
 		return;
 	}
 
+	if (isKnockbackRequested_)
+	{
+		behaviorRequest_ = Behavior::kKnockback;
+		isKnockbackRequested_ = false;
+	}
+
 	UpdateBehaviorTransition();
 
 	switch (behavior_)
@@ -62,6 +68,9 @@ void Player::Update()
 		break;
 	case Behavior::kAttack:
 		BehaviorAttackUpdate();
+		break;
+	case Behavior::kKnockback:
+		BehaviorKnockbackUpdate();
 		break;
 	}
 
@@ -189,9 +198,36 @@ void Player::UpdateBehaviorTransition()
 	case Behavior::kAttack:
 		BehaviorAttackInitialize();
 		break;
+	case Behavior::kKnockback:
+		BehaviorKnockbackInitialize();
+		break;
 	}
 
 	behaviorRequest_ = Behavior::kUnknown;
+}
+
+void Player::BehaviorKnockbackInitialize()
+{
+	knockbackParameter_ = 0;
+	attackParameter_ = 0;
+	worldTransform_.scale_ = {1.0f, 1.0f, 1.0f};
+	velocity_.x = IsFacingRight() ? -kKnockbackSpeed : kKnockbackSpeed;
+	velocity_.y = kKnockbackJumpSpeed;
+	onGround_ = false;
+}
+
+void Player::BehaviorKnockbackUpdate()
+{
+	++knockbackParameter_;
+
+	velocity_.y -= kGravityAcceleration;
+	velocity_.y = std::max(velocity_.y, -kLimitFallSpeed);
+	MoveByVelocity();
+
+	if (knockbackParameter_ >= kKnockbackTime && onGround_)
+	{
+		behaviorRequest_ = Behavior::kRoot;
+	}
 }
 
 void Player::MoveByVelocity()
