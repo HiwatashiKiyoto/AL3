@@ -49,7 +49,10 @@ GameScene::~GameScene()
 	delete cameraController_;
 }
 
-void GameScene::Initialize() {
+void GameScene::Initialize(StageManager* stageManager) {
+	stageManager_ = stageManager;
+	assert(stageManager_);
+
 	// カメラの初期化
 	//camera_ = new Camera();
 	//camera_->Initialize();
@@ -76,7 +79,9 @@ void GameScene::Initialize() {
 	
 	// マップチップフィールド
 	mapChipField_ = new MapChipField;
-	mapChipField_->LoadMapChipCsv("Resources/mapChip.csv");
+	const StageData& stageData = stageManager_->GetCurrentStageData();
+	const std::string stageFileName = "Resources/fields/" + stageData.name + ".csv";
+	mapChipField_->LoadMapChipCsv(stageFileName);
 
 	// プレイヤーの生成
 	modelPlayer_ = Model::CreateFromOBJ("player", true);

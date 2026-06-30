@@ -188,6 +188,7 @@
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="ShieldEnemy.cpp" />
     <ClCompile Include="Skydome.cpp" />
+    <ClCompile Include="StageManager.cpp" />
     <ClCompile Include="TitleScene.cpp" />
     <ClCompile Include="WorldTransformConfig.cpp" />
   </ItemGroup>
@@ -301,6 +302,7 @@
     <ClInclude Include="Player.h" />
     <ClInclude Include="ShieldEnemy.h" />
     <ClInclude Include="Skydome.h" />
+    <ClInclude Include="StageManager.h" />
     <ClInclude Include="TitleScene.h" />
     <ClInclude Include="WorldTransformConfig.h" />
   </ItemGroup>

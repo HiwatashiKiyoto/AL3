@@ -11,6 +11,7 @@
 #include "Player.h"
 #include "ShieldEnemy.h"
 #include "Skydome.h"
+#include "StageManager.h"
 #include <list>
 #include <vector>
 
@@ -19,7 +20,7 @@ class GameScene
 public:
 	~GameScene();
 
-	void Initialize();
+	void Initialize(StageManager* stageManager);
 	void Update();
 	void Draw();
 	bool IsFinished() const { return finished_; }
@@ -70,6 +71,7 @@ private:
 	Fade* fade_ = nullptr;
 
 	MapChipField* mapChipField_ = nullptr;
+	StageManager* stageManager_ = nullptr;
 	Phase phase_ = Phase::kFadeIn;
 	bool finished_ = false;
 	bool reloadRequested_ = false;

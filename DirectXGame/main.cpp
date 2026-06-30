@@ -2,6 +2,11 @@
 #include"KamataEngine.h"
 #include"GameScene.h"
 #include"TitleScene.h"
+#include"StageManager.h"
+
+#include <fstream>
+#include <sstream>
+#include <string>
 
 enum class Scene
 {
@@ -12,7 +17,46 @@ enum class Scene
 
 GameScene* gameScene = nullptr;
 TitleScene* titleScene = nullptr;
+StageManager* stageManager = nullptr;
 Scene scene = Scene::kUnknown;
+
+void LoadDebugSettings()
+{
+	const std::string filePath = "DebugSettings.ini";
+	std::ifstream file(filePath);
+	if (!file.is_open())
+	{
+		return;
+	}
+
+	std::stringstream debugSettings;
+	debugSettings << file.rdbuf();
+	file.close();
+
+	std::string line;
+	while (std::getline(debugSettings, line))
+	{
+		if (line.empty())
+		{
+			continue;
+		}
+
+		std::istringstream lineStream(line);
+		std::string key;
+		std::string value;
+		std::getline(lineStream, key, '=');
+		std::getline(lineStream, value, '=');
+		if (!value.empty() && value.back() == '\r')
+		{
+			value.pop_back();
+		}
+
+		if (key == "InitialStage")
+		{
+			stageManager->SetCurrentStageIndexByName(value);
+		}
+	}
+}
 
 void ChangeScene()
 {
@@ -25,7 +69,7 @@ void ChangeScene()
 			delete titleScene;
 			titleScene = nullptr;
 			gameScene = new GameScene();
-			gameScene->Initialize();
+			gameScene->Initialize(stageManager);
 		}
 		break;
 	case Scene::kGame:
@@ -42,7 +86,7 @@ void ChangeScene()
 			delete gameScene;
 			gameScene = nullptr;
 			gameScene = new GameScene();
-			gameScene->Initialize();
+			gameScene->Initialize(stageManager);
 		}
 		break;
 	default:
@@ -92,6 +136,13 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	using namespace KamataEngine;
 	DirectXCommon* dxCommon = DirectXCommon::GetInstance();
 
+	stageManager = new StageManager();
+	stageManager->LoadStageDataFile();
+
+#ifdef _DEBUG
+	LoadDebugSettings();
+#endif
+
 	//ゲームシーンのインスタンス生成
 	scene = Scene::kTitle;
 	titleScene = new TitleScene();
@@ -133,10 +184,12 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	//ゲームシーンの解放
 	delete titleScene;
 	delete gameScene;
+	delete stageManager;
 
 	//nullptrの代入
 	titleScene = nullptr;
 	gameScene = nullptr;
+	stageManager = nullptr;
 
 	//エンジンの終了処理
 	KamataEngine::Finalize();
