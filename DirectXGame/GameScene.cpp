@@ -7,6 +7,7 @@ GameScene::~GameScene()
 #ifdef _DEBUG
 	delete debugCamera_;
 #endif
+	delete enemy_;
 	delete player_;
 	delete model_;
 
@@ -26,6 +27,9 @@ void GameScene::Initialize()
 	player_ = new Player();
 	player_->Initialize(model_, textureHandle_);
 
+	enemy_ = new Enemy();
+	enemy_->Initialize(model_, {0.0f, 2.0f, 35.0f});
+
 #ifdef _DEBUG
 	debugCamera_ = new DebugCamera(WinApp::kWindowWidth, WinApp::kWindowHeight);
 #endif
@@ -37,6 +41,11 @@ void GameScene::Initialize()
 void GameScene::Updata()
 {
 	player_->Update();
+
+	if (enemy_)
+	{
+		enemy_->Update();
+	}
 
 #ifdef _DEBUG
 	if (Input::GetInstance()->TriggerKey(DIK_F1))
@@ -66,6 +75,11 @@ void GameScene::Draw()
 	Model::PreDraw();
 
 	player_->Draw(camera_);
+
+	if (enemy_)
+	{
+		enemy_->Draw(camera_);
+	}
 
 	AxisIndicator::GetInstance()->Draw();
 

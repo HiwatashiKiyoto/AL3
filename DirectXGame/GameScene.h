@@ -1,6 +1,7 @@
 #pragma once
 
 #include "KamataEngine.h"
+#include "Enemy.h"
 #include "Player.h"
 
 // Game scene
@@ -30,6 +31,9 @@ private:
 
 	// Player
 	Player* player_ = nullptr;
+
+	// Enemy
+	Enemy* enemy_ = nullptr;
 
 #ifdef _DEBUG
 	// Debug camera
