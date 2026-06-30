@@ -16,6 +16,9 @@ public:
 	void Draw(const KamataEngine::Camera& camera);
 
 private:
+	// Input device
+	KamataEngine::Input* input_ = nullptr;
+
 	// World transform data
 	KamataEngine::WorldTransform worldTransform_;
 

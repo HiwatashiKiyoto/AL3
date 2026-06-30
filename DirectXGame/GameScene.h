@@ -30,4 +30,12 @@ private:
 
 	// Player
 	Player* player_ = nullptr;
+
+#ifdef _DEBUG
+	// Debug camera
+	KamataEngine::DebugCamera* debugCamera_ = nullptr;
+
+	// Debug camera enabled
+	bool isDebugCameraActive_ = false;
+#endif
 };

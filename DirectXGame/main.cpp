@@ -10,7 +10,7 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 	/////////////
 
 	//エンジンの初期化
-	KamataEngine::Initialize(L"LC1B_24_ヒワタシ_キヨト_AL2");
+	KamataEngine::Initialize(L"LE1B_23_ヒワタシ_キヨト_AL3");
 	using namespace KamataEngine;
 	DirectXCommon* dxCommon = DirectXCommon::GetInstance();
 
@@ -28,14 +28,26 @@ int WINAPI WinMain(_In_ HINSTANCE, _In_opt_ HINSTANCE, _In_ LPSTR, _In_ int)
 			break;
 		}
 
+#ifdef USE_IMGUI
+		ImGuiManager::GetInstance()->Begin();
+#endif
+
 		//ゲームシーンの更新
 		gameScene->Updata();
+
+#ifdef USE_IMGUI
+		ImGuiManager::GetInstance()->End();
+#endif
 
 		//描画開始
 		dxCommon->PreDraw();
 
 		//ゲームシーンの描画
 		gameScene->Draw();
+
+#ifdef USE_IMGUI
+		ImGuiManager::GetInstance()->Draw();
+#endif
 
 		//描画終了
 		dxCommon->PostDraw();
