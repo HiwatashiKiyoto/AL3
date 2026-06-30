@@ -1,23 +1,16 @@
 #include "Player.h"
 
+#include "WorldTransformUpdate.h"
+
 #include <algorithm>
 #include <cassert>
 
 using namespace KamataEngine;
 using namespace KamataEngine::MathUtility;
 
-namespace
+Player::~Player()
 {
-Matrix4x4 MakeAffineMatrix(const Vector3& scale, const Vector3& rotation, const Vector3& translation)
-{
-	Matrix4x4 matScale = MakeScaleMatrix(scale);
-	Matrix4x4 matRotX = MakeRotateXMatrix(rotation.x);
-	Matrix4x4 matRotY = MakeRotateYMatrix(rotation.y);
-	Matrix4x4 matRotZ = MakeRotateZMatrix(rotation.z);
-	Matrix4x4 matTranslate = MakeTranslateMatrix(translation);
-
-	return matScale * matRotX * matRotY * matRotZ * matTranslate;
-}
+	delete bullet_;
 }
 
 void Player::Initialize(Model* model, uint32_t textureHandle)
@@ -33,13 +26,15 @@ void Player::Initialize(Model* model, uint32_t textureHandle)
 
 void Player::Update()
 {
+	Rotate();
+
 	Vector3 move = {0.0f, 0.0f, 0.0f};
 	const float kCharacterSpeed = 0.2f;
 
-	const bool isMoveLeft = input_->PushKey(DIK_LEFT) || input_->PushKey(DIK_A);
-	const bool isMoveRight = input_->PushKey(DIK_RIGHT) || input_->PushKey(DIK_D);
-	const bool isMoveForward = input_->PushKey(DIK_UP) || input_->PushKey(DIK_W);
-	const bool isMoveBack = input_->PushKey(DIK_DOWN) || input_->PushKey(DIK_S);
+	const bool isMoveLeft = input_->PushKey(DIK_LEFT);
+	const bool isMoveRight = input_->PushKey(DIK_RIGHT);
+	const bool isMoveForward = input_->PushKey(DIK_UP);
+	const bool isMoveBack = input_->PushKey(DIK_DOWN);
 
 	if (isMoveLeft)
 	{
@@ -52,19 +47,19 @@ void Player::Update()
 
 	if (isMoveForward)
 	{
-		move.z += kCharacterSpeed;
+		move.y += kCharacterSpeed;
 	}
 	if (isMoveBack)
 	{
-		move.z -= kCharacterSpeed;
+		move.y -= kCharacterSpeed;
 	}
 
 	worldTransform_.translation_ += move;
 
 	const float kMoveLimitX = 34.0f;
-	const float kMoveLimitZ = 18.0f;
+	const float kMoveLimitY = 18.0f;
 	worldTransform_.translation_.x = std::clamp(worldTransform_.translation_.x, -kMoveLimitX, kMoveLimitX);
-	worldTransform_.translation_.z = std::clamp(worldTransform_.translation_.z, -kMoveLimitZ, kMoveLimitZ);
+	worldTransform_.translation_.y = std::clamp(worldTransform_.translation_.y, -kMoveLimitY, kMoveLimitY);
 
 #ifdef USE_IMGUI
 	ImGui::Begin("Player");
@@ -73,13 +68,50 @@ void Player::Update()
 #endif
 
 	worldTransform_.translation_.x = std::clamp(worldTransform_.translation_.x, -kMoveLimitX, kMoveLimitX);
-	worldTransform_.translation_.z = std::clamp(worldTransform_.translation_.z, -kMoveLimitZ, kMoveLimitZ);
+	worldTransform_.translation_.y = std::clamp(worldTransform_.translation_.y, -kMoveLimitY, kMoveLimitY);
 
-	worldTransform_.matWorld_ = MakeAffineMatrix(worldTransform_.scale_, worldTransform_.rotation_, worldTransform_.translation_);
-	worldTransform_.TransferMatrix();
+	Attack();
+
+	if (bullet_)
+	{
+		bullet_->Update();
+	}
+
+	UpdateWorldTransform(worldTransform_);
 }
 
 void Player::Draw(const Camera& camera)
 {
 	model_->Draw(worldTransform_, camera);
+
+	if (bullet_)
+	{
+		bullet_->Draw(camera);
+	}
+}
+
+void Player::Rotate()
+{
+	const float kRotSpeed = 0.02f;
+
+	if (input_->PushKey(DIK_A))
+	{
+		worldTransform_.rotation_.y -= kRotSpeed;
+	}
+	else if (input_->PushKey(DIK_D))
+	{
+		worldTransform_.rotation_.y += kRotSpeed;
+	}
+}
+
+void Player::Attack()
+{
+	if (input_->TriggerKey(DIK_SPACE))
+	{
+		PlayerBullet* newBullet = new PlayerBullet();
+		newBullet->Initialize(model_, worldTransform_.translation_);
+
+		delete bullet_;
+		bullet_ = newBullet;
+	}
 }

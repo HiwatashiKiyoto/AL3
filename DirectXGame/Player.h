@@ -1,11 +1,14 @@
 #pragma once
 
 #include "KamataEngine.h"
+#include "PlayerBullet.h"
 
 // Player character
 class Player
 {
 public:
+	~Player();
+
 	// Initialize
 	void Initialize(KamataEngine::Model* model, uint32_t textureHandle);
 
@@ -14,6 +17,13 @@ public:
 
 	// Draw
 	void Draw(const KamataEngine::Camera& camera);
+
+private:
+	// Rotate
+	void Rotate();
+
+	// Attack
+	void Attack();
 
 private:
 	// Input device
@@ -27,4 +37,7 @@ private:
 
 	// Texture handle
 	uint32_t textureHandle_ = 0u;
+
+	// Bullet
+	PlayerBullet* bullet_ = nullptr;
 };

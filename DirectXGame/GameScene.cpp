@@ -39,7 +39,7 @@ void GameScene::Updata()
 	player_->Update();
 
 #ifdef _DEBUG
-	if (Input::GetInstance()->TriggerKey(DIK_F1) || Input::GetInstance()->TriggerKey(DIK_SPACE))
+	if (Input::GetInstance()->TriggerKey(DIK_F1))
 	{
 		isDebugCameraActive_ = !isDebugCameraActive_;
 	}
