@@ -15,8 +15,8 @@ GameScene::~GameScene()
 
 void GameScene::Initialize()
 {
-	textureHandle_ = TextureManager::Load("uvChecker.png");
-	model_ = Model::CreateFromOBJ("cube", true);
+	textureHandle_ = TextureManager::Load("white1x1.png");
+	model_ = Model::CreateFromOBJ("player", true);
 
 	camera_.Initialize();
 
