@@ -1,15 +1,33 @@
 #pragma once
-#include "KamataEngine.h"
 
-// ゲームシーン
-class GameScene {
+#include "KamataEngine.h"
+#include "Player.h"
+
+// Game scene
+class GameScene
+{
 public:
-	//初期化
+	~GameScene();
+
+	// Initialize
 	void Initialize();
 
-	//更新
+	// Update
 	void Updata();
 
-	//描画
+	// Draw
 	void Draw();
+
+private:
+	// Texture handle
+	uint32_t textureHandle_ = 0u;
+
+	// 3D model data
+	KamataEngine::Model* model_ = nullptr;
+
+	// View projection
+	KamataEngine::Camera camera_;
+
+	// Player
+	Player* player_ = nullptr;
 };
