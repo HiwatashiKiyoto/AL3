@@ -8,6 +8,13 @@
 class Enemy
 {
 public:
+	// Behavior phase
+	enum class Phase
+	{
+		Approach,
+		Leave,
+	};
+
 	/// <summary>
 	/// Initialize
 	/// </summary>
@@ -26,7 +33,16 @@ public:
 	/// <param name="camera">Camera</param>
 	void Draw(const KamataEngine::Camera& camera);
 
+	const KamataEngine::Vector3& GetPosition() const { return worldTransform_.translation_; }
+	const char* GetPhaseName() const;
+
 private:
+	// Update approach phase
+	void UpdateApproach();
+
+	// Update leave phase
+	void UpdateLeave();
+
 	// World transform data
 	KamataEngine::WorldTransform worldTransform_;
 
@@ -35,4 +51,7 @@ private:
 
 	// Texture handle
 	uint32_t textureHandle_ = 0u;
+
+	// Phase
+	Phase phase_ = Phase::Approach;
 };

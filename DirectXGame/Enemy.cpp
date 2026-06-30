@@ -13,6 +13,7 @@ void Enemy::Initialize(Model* model, const Vector3& position)
 
 	model_ = model;
 	textureHandle_ = TextureManager::Load("white1x1.png");
+	phase_ = Phase::Approach;
 
 	worldTransform_.Initialize();
 	worldTransform_.translation_ = position;
@@ -21,19 +22,52 @@ void Enemy::Initialize(Model* model, const Vector3& position)
 
 void Enemy::Update()
 {
-	const Vector3 velocity = {0.0f, 0.0f, -0.1f};
-	worldTransform_.translation_ += velocity;
+	switch (phase_)
+	{
+	case Phase::Approach:
+	default:
+		UpdateApproach();
+		break;
+	case Phase::Leave:
+		UpdateLeave();
+		break;
+	}
 
 	UpdateWorldTransform(worldTransform_);
 
-#ifdef USE_IMGUI
-	ImGui::Begin("Enemy");
-	ImGui::DragFloat3("Position", &worldTransform_.translation_.x, 0.01f);
-	ImGui::End();
-#endif
 }
 
 void Enemy::Draw(const Camera& camera)
 {
 	model_->Draw(worldTransform_, camera, textureHandle_);
+}
+
+void Enemy::UpdateApproach()
+{
+	const Vector3 velocity = {0.0f, 0.0f, -0.1f};
+	worldTransform_.translation_ += velocity;
+
+	if (worldTransform_.translation_.z < 0.0f)
+	{
+		phase_ = Phase::Leave;
+	}
+}
+
+void Enemy::UpdateLeave()
+{
+	const Vector3 velocity = {0.0f, 0.0f, 0.1f};
+	worldTransform_.translation_ += velocity;
+}
+
+const char* Enemy::GetPhaseName() const
+{
+	switch (phase_)
+	{
+	case Phase::Approach:
+		return "Approach";
+	case Phase::Leave:
+		return "Leave";
+	}
+
+	return "Unknown";
 }

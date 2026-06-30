@@ -47,6 +47,26 @@ void GameScene::Updata()
 		enemy_->Update();
 	}
 
+#ifdef USE_IMGUI
+	const ImGuiWindowFlags debugInfoFlags =
+	    ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
+	    ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs | ImGuiWindowFlags_NoBackground;
+	ImGui::SetNextWindowPos(ImVec2(8.0f, 8.0f), ImGuiCond_Always);
+	ImGui::SetNextWindowSize(ImVec2(360.0f, 90.0f), ImGuiCond_Always);
+	ImGui::Begin("DebugInfo", nullptr, debugInfoFlags);
+	const Vector3& playerPosition = player_->GetPosition();
+	const Vector3& playerRotation = player_->GetRotation();
+	ImGui::Text("Player Pos:(%.6f,%.6f,%.6f)", playerPosition.x, playerPosition.y, playerPosition.z);
+	ImGui::Text("Player Rot:%.6f", playerRotation.y);
+	if (enemy_)
+	{
+		const Vector3& enemyPosition = enemy_->GetPosition();
+		ImGui::Text("Enemy Pos:(%.6f,%.6f,%.6f)", enemyPosition.x, enemyPosition.y, enemyPosition.z);
+		ImGui::Text("Phase: %s", enemy_->GetPhaseName());
+	}
+	ImGui::End();
+#endif
+
 #ifdef _DEBUG
 	if (Input::GetInstance()->TriggerKey(DIK_F1))
 	{
