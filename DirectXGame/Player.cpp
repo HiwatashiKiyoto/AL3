@@ -29,6 +29,16 @@ void Player::Initialize(Model* model, uint32_t textureHandle)
 
 void Player::Update()
 {
+	bullets_.remove_if([](PlayerBullet* bullet) {
+		if (bullet->IsDead())
+		{
+			delete bullet;
+			return true;
+		}
+
+		return false;
+	});
+
 	Rotate();
 
 	Vector3 move = {0.0f, 0.0f, 0.0f};
@@ -73,14 +83,14 @@ void Player::Update()
 	worldTransform_.translation_.x = std::clamp(worldTransform_.translation_.x, -kMoveLimitX, kMoveLimitX);
 	worldTransform_.translation_.y = std::clamp(worldTransform_.translation_.y, -kMoveLimitY, kMoveLimitY);
 
+	UpdateWorldTransform(worldTransform_);
+
 	Attack();
 
 	for (PlayerBullet* bullet : bullets_)
 	{
 		bullet->Update();
 	}
-
-	UpdateWorldTransform(worldTransform_);
 }
 
 void Player::Draw(const Camera& camera)
@@ -111,8 +121,12 @@ void Player::Attack()
 {
 	if (input_->TriggerKey(DIK_SPACE))
 	{
+		const float kBulletSpeed = 1.0f;
+		Vector3 velocity = {0.0f, 0.0f, kBulletSpeed};
+		velocity = TransformNormal(velocity, worldTransform_.matWorld_);
+
 		PlayerBullet* newBullet = new PlayerBullet();
-		newBullet->Initialize(model_, worldTransform_.translation_);
+		newBullet->Initialize(model_, worldTransform_.translation_, velocity);
 
 		bullets_.push_back(newBullet);
 	}
