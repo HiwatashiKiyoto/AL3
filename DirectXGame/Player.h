@@ -3,6 +3,8 @@
 #include "KamataEngine.h"
 #include "PlayerBullet.h"
 
+#include <list>
+
 // Player character
 class Player
 {
@@ -38,6 +40,6 @@ private:
 	// Texture handle
 	uint32_t textureHandle_ = 0u;
 
-	// Bullet
-	PlayerBullet* bullet_ = nullptr;
+	// Bullets
+	std::list<PlayerBullet*> bullets_;
 };

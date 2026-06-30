@@ -10,7 +10,10 @@ using namespace KamataEngine::MathUtility;
 
 Player::~Player()
 {
-	delete bullet_;
+	for (PlayerBullet* bullet : bullets_)
+	{
+		delete bullet;
+	}
 }
 
 void Player::Initialize(Model* model, uint32_t textureHandle)
@@ -72,9 +75,9 @@ void Player::Update()
 
 	Attack();
 
-	if (bullet_)
+	for (PlayerBullet* bullet : bullets_)
 	{
-		bullet_->Update();
+		bullet->Update();
 	}
 
 	UpdateWorldTransform(worldTransform_);
@@ -84,9 +87,9 @@ void Player::Draw(const Camera& camera)
 {
 	model_->Draw(worldTransform_, camera);
 
-	if (bullet_)
+	for (PlayerBullet* bullet : bullets_)
 	{
-		bullet_->Draw(camera);
+		bullet->Draw(camera);
 	}
 }
 
@@ -111,7 +114,6 @@ void Player::Attack()
 		PlayerBullet* newBullet = new PlayerBullet();
 		newBullet->Initialize(model_, worldTransform_.translation_);
 
-		delete bullet_;
-		bullet_ = newBullet;
+		bullets_.push_back(newBullet);
 	}
 }
