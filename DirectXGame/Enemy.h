@@ -1,6 +1,9 @@
 #pragma once
 
+#include "EnemyBullet.h"
 #include "KamataEngine.h"
+
+#include <list>
 
 /// <summary>
 /// Enemy
@@ -8,6 +11,8 @@
 class Enemy
 {
 public:
+	~Enemy();
+
 	// Behavior phase
 	enum class Phase
 	{
@@ -37,6 +42,12 @@ public:
 	const char* GetPhaseName() const;
 
 private:
+	// Fire bullet
+	void Fire();
+
+	// Initialize approach phase
+	void ApproachPhaseInitialize();
+
 	// Update approach phase
 	void UpdateApproach();
 
@@ -52,6 +63,15 @@ private:
 	// Texture handle
 	uint32_t textureHandle_ = 0u;
 
+	// Bullets
+	std::list<EnemyBullet*> bullets_;
+
 	// Phase
 	Phase phase_ = Phase::Approach;
+
+	// Fire interval
+	static const int kFireInterval = 60;
+
+	// Fire timer
+	int32_t fireTimer_ = 0;
 };

@@ -7,6 +7,14 @@
 using namespace KamataEngine;
 using namespace KamataEngine::MathUtility;
 
+Enemy::~Enemy()
+{
+	for (EnemyBullet* bullet : bullets_)
+	{
+		delete bullet;
+	}
+}
+
 void Enemy::Initialize(Model* model, const Vector3& position)
 {
 	assert(model);
@@ -14,6 +22,7 @@ void Enemy::Initialize(Model* model, const Vector3& position)
 	model_ = model;
 	textureHandle_ = TextureManager::Load("white1x1.png");
 	phase_ = Phase::Approach;
+	ApproachPhaseInitialize();
 
 	worldTransform_.Initialize();
 	worldTransform_.translation_ = position;
@@ -22,6 +31,16 @@ void Enemy::Initialize(Model* model, const Vector3& position)
 
 void Enemy::Update()
 {
+	bullets_.remove_if([](EnemyBullet* bullet) {
+		if (bullet->IsDead())
+		{
+			delete bullet;
+			return true;
+		}
+
+		return false;
+	});
+
 	switch (phase_)
 	{
 	case Phase::Approach:
@@ -35,15 +54,46 @@ void Enemy::Update()
 
 	UpdateWorldTransform(worldTransform_);
 
+	for (EnemyBullet* bullet : bullets_)
+	{
+		bullet->Update();
+	}
 }
 
 void Enemy::Draw(const Camera& camera)
 {
 	model_->Draw(worldTransform_, camera, textureHandle_);
+
+	for (EnemyBullet* bullet : bullets_)
+	{
+		bullet->Draw(camera);
+	}
+}
+
+void Enemy::Fire()
+{
+	const float kBulletSpeed = 1.0f;
+	const Vector3 velocity = {0.0f, 0.0f, -kBulletSpeed};
+
+	EnemyBullet* newBullet = new EnemyBullet();
+	newBullet->Initialize(model_, worldTransform_.translation_, velocity);
+
+	bullets_.push_back(newBullet);
+}
+
+void Enemy::ApproachPhaseInitialize()
+{
+	fireTimer_ = kFireInterval;
 }
 
 void Enemy::UpdateApproach()
 {
+	if (--fireTimer_ <= 0)
+	{
+		Fire();
+		fireTimer_ = kFireInterval;
+	}
+
 	const Vector3 velocity = {0.0f, 0.0f, -0.1f};
 	worldTransform_.translation_ += velocity;
 
