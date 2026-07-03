@@ -5,6 +5,9 @@
 
 #include <list>
 
+// Player class forward declaration
+class Player;
+
 /// <summary>
 /// Enemy
 /// </summary>
@@ -48,6 +51,12 @@ public:
 	/// </summary>
 	const char* GetPhaseName() const;
 
+	// Set player
+	void SetPlayer(Player* player) { player_ = player; }
+
+	// Get world position
+	KamataEngine::Vector3 GetWorldPosition() const;
+
 private:
 	// Fire bullet
 	void Fire();
@@ -66,6 +75,9 @@ private:
 
 	// Borrowed model data
 	KamataEngine::Model* model_ = nullptr;
+
+	// Borrowed player data
+	Player* player_ = nullptr;
 
 	// Texture handle
 	uint32_t textureHandle_ = 0u;

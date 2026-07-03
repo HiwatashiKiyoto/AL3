@@ -1,5 +1,6 @@
 #include "Enemy.h"
 
+#include "Player.h"
 #include "WorldTransformUpdate.h"
 
 #include <cassert>
@@ -78,11 +79,19 @@ void Enemy::Draw(const Camera& camera)
 
 void Enemy::Fire()
 {
+	assert(player_);
+
 	const float kBulletSpeed = 1.0f;
-	const Vector3 velocity = {0.0f, 0.0f, -kBulletSpeed};
+
+	Vector3 playerPosition = player_->GetWorldPosition();
+	Vector3 enemyPosition = GetWorldPosition();
+
+	Vector3 velocity = playerPosition - enemyPosition;
+	Normalize(velocity);
+	velocity *= kBulletSpeed;
 
 	EnemyBullet* newBullet = new EnemyBullet();
-	newBullet->Initialize(model_, worldTransform_.translation_, velocity);
+	newBullet->Initialize(model_, enemyPosition, velocity);
 
 	bullets_.push_back(newBullet);
 }
@@ -126,4 +135,15 @@ const char* Enemy::GetPhaseName() const
 	}
 
 	return "Unknown";
+}
+
+Vector3 Enemy::GetWorldPosition() const
+{
+	Vector3 worldPos;
+
+	worldPos.x = worldTransform_.matWorld_.m[3][0];
+	worldPos.y = worldTransform_.matWorld_.m[3][1];
+	worldPos.z = worldTransform_.matWorld_.m[3][2];
+
+	return worldPos;
 }

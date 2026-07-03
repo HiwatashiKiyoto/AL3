@@ -29,6 +29,7 @@ void GameScene::Initialize()
 
 	enemy_ = new Enemy();
 	enemy_->Initialize(model_, {30.0f, 2.0f, 35.0f});
+	enemy_->SetPlayer(player_);
 
 #ifdef _DEBUG
 	debugCamera_ = new DebugCamera(WinApp::kWindowWidth, WinApp::kWindowHeight);

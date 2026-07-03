@@ -26,6 +26,9 @@ public:
 	// Get rotation
 	const KamataEngine::Vector3& GetRotation() const { return worldTransform_.rotation_; }
 
+	// Get world position
+	KamataEngine::Vector3 GetWorldPosition() const;
+
 private:
 	// Rotate
 	void Rotate();
