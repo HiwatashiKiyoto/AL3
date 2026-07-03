@@ -58,6 +58,12 @@ void Enemy::Update()
 	{
 		bullet->Update();
 	}
+
+#ifdef USE_IMGUI
+	ImGui::Begin("Enemy");
+	ImGui::DragFloat3("Position", &worldTransform_.translation_.x, 0.01f);
+	ImGui::End();
+#endif
 }
 
 void Enemy::Draw(const Camera& camera)

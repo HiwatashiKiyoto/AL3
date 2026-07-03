@@ -38,7 +38,14 @@ public:
 	/// <param name="camera">Camera</param>
 	void Draw(const KamataEngine::Camera& camera);
 
+	/// <summary>
+	/// Get position
+	/// </summary>
 	const KamataEngine::Vector3& GetPosition() const { return worldTransform_.translation_; }
+
+	/// <summary>
+	/// Get phase name
+	/// </summary>
 	const char* GetPhaseName() const;
 
 private:

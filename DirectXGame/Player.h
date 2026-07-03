@@ -20,7 +20,10 @@ public:
 	// Draw
 	void Draw(const KamataEngine::Camera& camera);
 
+	// Get position
 	const KamataEngine::Vector3& GetPosition() const { return worldTransform_.translation_; }
+
+	// Get rotation
 	const KamataEngine::Vector3& GetRotation() const { return worldTransform_.rotation_; }
 
 private:
