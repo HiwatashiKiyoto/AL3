@@ -114,6 +114,10 @@ Vector3 Player::GetWorldPosition() const
 	return worldPos;
 }
 
+void Player::OnCollision()
+{
+}
+
 void Player::Rotate()
 {
 	const float kRotSpeed = 0.02f;

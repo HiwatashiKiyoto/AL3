@@ -57,6 +57,12 @@ public:
 	// Get world position
 	KamataEngine::Vector3 GetWorldPosition() const;
 
+	// Get bullets
+	const std::list<EnemyBullet*>& GetBullets() const { return bullets_; }
+
+	// Callback function called when collision is detected
+	void OnCollision();
+
 private:
 	// Fire bullet
 	void Fire();

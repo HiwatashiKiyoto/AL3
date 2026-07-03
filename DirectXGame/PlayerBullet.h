@@ -29,6 +29,12 @@ public:
 
 	bool IsDead() const { return isDead_; }
 
+	// Get world position
+	KamataEngine::Vector3 GetWorldPosition() const;
+
+	// Callback function called when collision is detected
+	void OnCollision();
+
 private:
 	// Life time
 	static const int32_t kLifeTime = 60 * 5;

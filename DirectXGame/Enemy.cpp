@@ -147,3 +147,7 @@ Vector3 Enemy::GetWorldPosition() const
 
 	return worldPos;
 }
+
+void Enemy::OnCollision()
+{
+}

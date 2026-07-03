@@ -2,6 +2,20 @@
 
 using namespace KamataEngine;
 
+namespace
+{
+bool IsCollision(const Vector3& positionA, const Vector3& positionB, float radiusA, float radiusB)
+{
+	const float dx = positionB.x - positionA.x;
+	const float dy = positionB.y - positionA.y;
+	const float dz = positionB.z - positionA.z;
+	const float distanceSquared = dx * dx + dy * dy + dz * dz;
+	const float radiusSum = radiusA + radiusB;
+
+	return distanceSquared <= radiusSum * radiusSum;
+}
+}
+
 GameScene::~GameScene()
 {
 #ifdef _DEBUG
@@ -48,6 +62,8 @@ void GameScene::Updata()
 		enemy_->Update();
 	}
 
+	CheckAllCollisions();
+
 #ifdef USE_IMGUI
 	const ImGuiWindowFlags debugInfoFlags =
 	    ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
@@ -89,6 +105,68 @@ void GameScene::Updata()
 		camera_.UpdateMatrix();
 	}
 
+}
+
+void GameScene::CheckAllCollisions()
+{
+	const float kPlayerRadius = 1.0f;
+	const float kEnemyRadius = 1.0f;
+	const float kPlayerBulletRadius = 1.0f;
+	const float kEnemyBulletRadius = 1.0f;
+
+	Vector3 posA;
+	Vector3 posB;
+
+	const std::list<PlayerBullet*>& playerBullets = player_->GetBullets();
+	const std::list<EnemyBullet*>& enemyBullets = enemy_->GetBullets();
+
+#pragma region Player and enemy bullet collision
+	posA = player_->GetWorldPosition();
+
+	for (EnemyBullet* bullet : enemyBullets)
+	{
+		posB = bullet->GetWorldPosition();
+
+		if (IsCollision(posA, posB, kPlayerRadius, kEnemyBulletRadius))
+		{
+			player_->OnCollision();
+			bullet->OnCollision();
+		}
+	}
+#pragma endregion
+
+#pragma region Player bullet and enemy collision
+	posA = enemy_->GetWorldPosition();
+
+	for (PlayerBullet* bullet : playerBullets)
+	{
+		posB = bullet->GetWorldPosition();
+
+		if (IsCollision(posA, posB, kEnemyRadius, kPlayerBulletRadius))
+		{
+			enemy_->OnCollision();
+			bullet->OnCollision();
+		}
+	}
+#pragma endregion
+
+#pragma region Player bullet and enemy bullet collision
+	for (PlayerBullet* playerBullet : playerBullets)
+	{
+		posA = playerBullet->GetWorldPosition();
+
+		for (EnemyBullet* enemyBullet : enemyBullets)
+		{
+			posB = enemyBullet->GetWorldPosition();
+
+			if (IsCollision(posA, posB, kPlayerBulletRadius, kEnemyBulletRadius))
+			{
+				playerBullet->OnCollision();
+				enemyBullet->OnCollision();
+			}
+		}
+	}
+#pragma endregion
 }
 
 void GameScene::Draw()

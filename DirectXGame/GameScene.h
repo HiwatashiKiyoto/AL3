@@ -20,6 +20,10 @@ public:
 	void Draw();
 
 private:
+	// Check all collisions
+	void CheckAllCollisions();
+
+private:
 	// Texture handle
 	uint32_t textureHandle_ = 0u;
 
