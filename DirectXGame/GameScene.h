@@ -3,6 +3,7 @@
 #include "KamataEngine.h"
 #include "Enemy.h"
 #include "Player.h"
+#include "Skydome.h"
 
 // Game scene
 class GameScene
@@ -30,8 +31,14 @@ private:
 	// 3D model data
 	KamataEngine::Model* model_ = nullptr;
 
+	// Skydome model data
+	KamataEngine::Model* modelSkydome_ = nullptr;
+
 	// View projection
 	KamataEngine::Camera camera_;
+
+	// Skydome
+	Skydome* skydome_ = nullptr;
 
 	// Player
 	Player* player_ = nullptr;

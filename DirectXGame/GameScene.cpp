@@ -4,6 +4,8 @@ using namespace KamataEngine;
 
 namespace
 {
+const float kCameraFarZ = 2000.0f;
+
 bool IsCollision(const Vector3& positionA, const Vector3& positionB, float radiusA, float radiusB)
 {
 	const float dx = positionB.x - positionA.x;
@@ -23,6 +25,8 @@ GameScene::~GameScene()
 #endif
 	delete enemy_;
 	delete player_;
+	delete skydome_;
+	delete modelSkydome_;
 	delete model_;
 
 	if (textureHandle_ != 0u)
@@ -35,11 +39,16 @@ void GameScene::Initialize()
 {
 	textureHandle_ = TextureManager::Load("white1x1.png");
 	model_ = Model::CreateFromOBJ("cube", true);
+	modelSkydome_ = Model::CreateFromOBJ("mySkydome", true);
 
 	camera_.Initialize();
+	camera_.farZ = kCameraFarZ;
 
 	player_ = new Player();
 	player_->Initialize(model_, textureHandle_);
+
+	skydome_ = new Skydome();
+	skydome_->Initialize(modelSkydome_);
 
 	enemy_ = new Enemy();
 	enemy_->Initialize(model_, {30.0f, 2.0f, 35.0f});
@@ -47,6 +56,7 @@ void GameScene::Initialize()
 
 #ifdef _DEBUG
 	debugCamera_ = new DebugCamera(WinApp::kWindowWidth, WinApp::kWindowHeight);
+	debugCamera_->SetFarZ(kCameraFarZ);
 #endif
 
 	AxisIndicator::GetInstance()->SetVisible(true);
@@ -61,6 +71,8 @@ void GameScene::Updata()
 	{
 		enemy_->Update();
 	}
+
+	skydome_->Update();
 
 	CheckAllCollisions();
 
@@ -171,6 +183,12 @@ void GameScene::CheckAllCollisions()
 
 void GameScene::Draw()
 {
+	Model::PreDraw(Model::CullingMode::kNone);
+
+	skydome_->Draw(camera_);
+
+	Model::PostDraw();
+
 	Model::PreDraw();
 
 	player_->Draw(camera_);
