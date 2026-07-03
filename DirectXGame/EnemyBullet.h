@@ -2,6 +2,9 @@
 
 #include "KamataEngine.h"
 
+// Player class forward declaration
+class Player;
+
 /// <summary>
 /// Enemy bullet
 /// </summary>
@@ -29,15 +32,30 @@ public:
 
 	bool IsDead() const { return isDead_; }
 
+	// Set player
+	void SetPlayer(Player* player) { player_ = player; }
+
 private:
+	// Get world position
+	KamataEngine::Vector3 GetWorldPosition() const;
+
+	// Update rotation
+	void UpdateRotation();
+
 	// Life time
 	static const int32_t kLifeTime = 60 * 5;
+
+	// Homing strength
+	static constexpr float kHomingStrength = 0.02f;
 
 	// World transform data
 	KamataEngine::WorldTransform worldTransform_;
 
 	// Borrowed model data
 	KamataEngine::Model* model_ = nullptr;
+
+	// Borrowed player data
+	Player* player_ = nullptr;
 
 	// Texture handle
 	uint32_t textureHandle_ = 0u;
