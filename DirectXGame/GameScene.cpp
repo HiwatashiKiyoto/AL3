@@ -81,7 +81,32 @@ void GameScene::Updata()
 {
 	railCamera_->Update();
 
-	player_->Update();
+#ifdef _DEBUG
+	if (Input::GetInstance()->TriggerKey(DIK_F1))
+	{
+		isDebugCameraActive_ = !isDebugCameraActive_;
+	}
+
+	if (isDebugCameraActive_)
+	{
+		debugCamera_->Update();
+		const Camera& debugCamera = debugCamera_->GetCamera();
+		camera_.matView = debugCamera.matView;
+		camera_.matProjection = debugCamera.matProjection;
+		camera_.translation_ = debugCamera.translation_;
+		camera_.TransferMatrix();
+	}
+	else
+#endif
+	{
+		const Camera& railCamera = railCamera_->GetCamera();
+		camera_.matView = railCamera.matView;
+		camera_.matProjection = railCamera.matProjection;
+		camera_.translation_ = railCamera.translation_;
+		camera_.TransferMatrix();
+	}
+
+	player_->Update(camera_);
 
 	UpdateEnemyPopCommands();
 
@@ -141,31 +166,6 @@ void GameScene::Updata()
 	}
 	ImGui::End();
 #endif
-
-#ifdef _DEBUG
-	if (Input::GetInstance()->TriggerKey(DIK_F1))
-	{
-		isDebugCameraActive_ = !isDebugCameraActive_;
-	}
-
-	if (isDebugCameraActive_)
-	{
-		debugCamera_->Update();
-		const Camera& debugCamera = debugCamera_->GetCamera();
-		camera_.matView = debugCamera.matView;
-		camera_.matProjection = debugCamera.matProjection;
-		camera_.translation_ = debugCamera.translation_;
-		camera_.TransferMatrix();
-	}
-	else
-#endif
-	{
-		const Camera& railCamera = railCamera_->GetCamera();
-		camera_.matView = railCamera.matView;
-		camera_.matProjection = railCamera.matProjection;
-		camera_.translation_ = railCamera.translation_;
-		camera_.TransferMatrix();
-	}
 
 }
 
@@ -335,4 +335,10 @@ void GameScene::Draw()
 	AxisIndicator::GetInstance()->Draw();
 
 	Model::PostDraw();
+
+	Sprite::PreDraw();
+
+	player_->DrawUI();
+
+	Sprite::PostDraw();
 }

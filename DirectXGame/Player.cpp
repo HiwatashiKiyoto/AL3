@@ -4,12 +4,36 @@
 
 #include <algorithm>
 #include <cassert>
+#include <climits>
 
 using namespace KamataEngine;
 using namespace KamataEngine::MathUtility;
 
+namespace
+{
+Matrix4x4 MakeViewportMatrix(float left, float top, float width, float height, float minDepth, float maxDepth)
+{
+	Matrix4x4 result = MakeIdentityMatrix();
+	result.m[0][0] = width / 2.0f;
+	result.m[1][1] = -height / 2.0f;
+	result.m[2][2] = maxDepth - minDepth;
+	result.m[3][0] = left + width / 2.0f;
+	result.m[3][1] = top + height / 2.0f;
+	result.m[3][2] = minDepth;
+
+	return result;
+}
+
+bool IsGamepadButtonTriggered(const XINPUT_STATE& current, const XINPUT_STATE& previous, WORD button)
+{
+	return (current.Gamepad.wButtons & button) != 0 && (previous.Gamepad.wButtons & button) == 0;
+}
+}
+
 Player::~Player()
 {
+	delete sprite2DReticle_;
+
 	for (PlayerBullet* bullet : bullets_)
 	{
 		delete bullet;
@@ -26,9 +50,15 @@ void Player::Initialize(Model* model, uint32_t textureHandle)
 
 	worldTransform_.Initialize();
 	worldTransform_.translation_ = {0.0f, 0.0f, 50.0f};
+
+	worldTransform3DReticle_.Initialize();
+	worldTransform3DReticle_.scale_ = {0.8f, 0.8f, 0.8f};
+
+	sprite2DReticle_ = Sprite::Create(textureHandle_, {0.0f, 0.0f}, {1.0f, 1.0f, 1.0f, 0.65f}, {0.5f, 0.5f});
+	sprite2DReticle_->SetSize({32.0f, 32.0f});
 }
 
-void Player::Update()
+void Player::Update(const Camera& camera)
 {
 	bullets_.remove_if([](PlayerBullet* bullet) {
 		if (bullet->IsDead())
@@ -68,6 +98,13 @@ void Player::Update()
 		move.y -= kCharacterSpeed;
 	}
 
+	XINPUT_STATE joyState{};
+	if (input_->GetJoystickState(0, joyState))
+	{
+		move.x += static_cast<float>(joyState.Gamepad.sThumbLX) / static_cast<float>(SHRT_MAX) * kCharacterSpeed;
+		move.y += static_cast<float>(joyState.Gamepad.sThumbLY) / static_cast<float>(SHRT_MAX) * kCharacterSpeed;
+	}
+
 	worldTransform_.translation_ += move;
 
 	const float kMoveLimitX = 34.0f;
@@ -85,6 +122,8 @@ void Player::Update()
 	worldTransform_.translation_.y = std::clamp(worldTransform_.translation_.y, -kMoveLimitY, kMoveLimitY);
 
 	UpdateWorldTransform(worldTransform_);
+	Update3DReticle();
+	Update2DReticle(camera);
 
 	Attack();
 
@@ -97,10 +136,19 @@ void Player::Update()
 void Player::Draw(const Camera& camera)
 {
 	model_->Draw(worldTransform_, camera);
+	model_->Draw(worldTransform3DReticle_, camera, textureHandle_);
 
 	for (PlayerBullet* bullet : bullets_)
 	{
 		bullet->Draw(camera);
+	}
+}
+
+void Player::DrawUI()
+{
+	if (sprite2DReticle_)
+	{
+		sprite2DReticle_->Draw();
 	}
 }
 
@@ -140,15 +188,51 @@ void Player::Rotate()
 
 void Player::Attack()
 {
-	if (input_->TriggerKey(DIK_SPACE))
+	XINPUT_STATE joyState{};
+	XINPUT_STATE joyStatePre{};
+	const bool isGamepadShot =
+	    input_->GetJoystickState(0, joyState) && input_->GetJoystickStatePrevious(0, joyStatePre) &&
+	    IsGamepadButtonTriggered(joyState, joyStatePre, XINPUT_GAMEPAD_RIGHT_SHOULDER);
+
+	if (input_->TriggerKey(DIK_SPACE) || isGamepadShot)
 	{
 		const float kBulletSpeed = 1.0f;
-		Vector3 velocity = {0.0f, 0.0f, kBulletSpeed};
-		velocity = TransformNormal(velocity, worldTransform_.matWorld_);
+		Vector3 velocity = worldTransform3DReticle_.translation_ - GetWorldPosition();
+		Normalize(velocity);
+		velocity *= kBulletSpeed;
 
 		PlayerBullet* newBullet = new PlayerBullet();
 		newBullet->Initialize(model_, GetWorldPosition(), velocity);
 
 		bullets_.push_back(newBullet);
 	}
+}
+
+void Player::Update3DReticle()
+{
+	const float kDistancePlayerTo3DReticle = 50.0f;
+	Vector3 offset = {0.0f, 0.0f, 1.0f};
+	offset = TransformNormal(offset, worldTransform_.matWorld_);
+	Normalize(offset);
+	offset *= kDistancePlayerTo3DReticle;
+
+	worldTransform3DReticle_.rotation_ = worldTransform_.rotation_;
+	worldTransform3DReticle_.translation_ = GetWorldPosition() + offset;
+	UpdateWorldTransform(worldTransform3DReticle_);
+}
+
+void Player::Update2DReticle(const Camera& camera)
+{
+	if (!sprite2DReticle_)
+	{
+		return;
+	}
+
+	Vector3 positionReticle = worldTransform3DReticle_.translation_;
+	const Matrix4x4 matViewport =
+	    MakeViewportMatrix(0.0f, 0.0f, static_cast<float>(WinApp::kWindowWidth), static_cast<float>(WinApp::kWindowHeight), 0.0f, 1.0f);
+	const Matrix4x4 matViewProjectionViewport = camera.matView * camera.matProjection * matViewport;
+	positionReticle = Transform(positionReticle, matViewProjectionViewport);
+
+	sprite2DReticle_->SetPosition({positionReticle.x, positionReticle.y});
 }

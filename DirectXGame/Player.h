@@ -15,10 +15,13 @@ public:
 	void Initialize(KamataEngine::Model* model, uint32_t textureHandle);
 
 	// Update
-	void Update();
+	void Update(const KamataEngine::Camera& camera);
 
 	// Draw
 	void Draw(const KamataEngine::Camera& camera);
+
+	// Draw UI
+	void DrawUI();
 
 	// Get position
 	const KamataEngine::Vector3& GetPosition() const { return worldTransform_.translation_; }
@@ -45,6 +48,12 @@ private:
 	// Attack
 	void Attack();
 
+	// Update 3D reticle
+	void Update3DReticle();
+
+	// Update 2D reticle
+	void Update2DReticle(const KamataEngine::Camera& camera);
+
 private:
 	// Input device
 	KamataEngine::Input* input_ = nullptr;
@@ -57,6 +66,12 @@ private:
 
 	// Texture handle
 	uint32_t textureHandle_ = 0u;
+
+	// 3D reticle world transform data
+	KamataEngine::WorldTransform worldTransform3DReticle_;
+
+	// 2D reticle sprite
+	KamataEngine::Sprite* sprite2DReticle_ = nullptr;
 
 	// Bullets
 	std::list<PlayerBullet*> bullets_;
