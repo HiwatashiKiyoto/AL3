@@ -79,6 +79,9 @@
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
+    <None Include="Resources\enemyPop.csv">
+      <Filter>リソース ファイル</Filter>
+    </None>
     <None Include="Resources\shaders\Sprite.hlsli">
       <Filter>シェーダー ファイル</Filter>
     </None>

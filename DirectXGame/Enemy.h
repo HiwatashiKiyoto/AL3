@@ -3,10 +3,10 @@
 #include "EnemyBullet.h"
 #include "KamataEngine.h"
 
-#include <list>
-
 // Player class forward declaration
 class Player;
+// GameScene class forward declaration
+class GameScene;
 
 /// <summary>
 /// Enemy
@@ -54,11 +54,14 @@ public:
 	// Set player
 	void SetPlayer(Player* player) { player_ = player; }
 
+	// Set game scene
+	void SetGameScene(GameScene* gameScene) { gameScene_ = gameScene; }
+
 	// Get world position
 	KamataEngine::Vector3 GetWorldPosition() const;
 
-	// Get bullets
-	const std::list<EnemyBullet*>& GetBullets() const { return bullets_; }
+	// Is dead
+	bool IsDead() const { return isDead_; }
 
 	// Callback function called when collision is detected
 	void OnCollision();
@@ -85,11 +88,11 @@ private:
 	// Borrowed player data
 	Player* player_ = nullptr;
 
+	// Borrowed game scene
+	GameScene* gameScene_ = nullptr;
+
 	// Texture handle
 	uint32_t textureHandle_ = 0u;
-
-	// Bullets
-	std::list<EnemyBullet*> bullets_;
 
 	// Phase
 	Phase phase_ = Phase::Approach;
@@ -99,4 +102,7 @@ private:
 
 	// Fire timer
 	int32_t fireTimer_ = 0;
+
+	// Death flag
+	bool isDead_ = false;
 };

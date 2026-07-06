@@ -6,6 +6,9 @@
 #include "RailCameraController.h"
 #include "Skydome.h"
 
+#include <list>
+#include <sstream>
+
 // Game scene
 class GameScene
 {
@@ -21,9 +24,21 @@ public:
 	// Draw
 	void Draw();
 
+	// Add enemy bullet
+	void AddEnemyBullet(EnemyBullet* enemyBullet);
+
 private:
 	// Check all collisions
 	void CheckAllCollisions();
+
+	// Spawn enemy
+	void SpawnEnemy(const KamataEngine::Vector3& position);
+
+	// Load enemy pop data
+	void LoadEnemyPopData();
+
+	// Update enemy pop commands
+	void UpdateEnemyPopCommands();
 
 private:
 	// Texture handle
@@ -47,8 +62,20 @@ private:
 	// Player
 	Player* player_ = nullptr;
 
-	// Enemy
-	Enemy* enemy_ = nullptr;
+	// Enemies
+	std::list<Enemy*> enemies_;
+
+	// Enemy bullets
+	std::list<EnemyBullet*> enemyBullets_;
+
+	// Enemy pop commands
+	std::stringstream enemyPopCommands_;
+
+	// Waiting flag
+	bool isWaitingEnemyPop_ = false;
+
+	// Waiting timer
+	int32_t enemyPopWaitTimer_ = 0;
 
 #ifdef _DEBUG
 	// Debug camera

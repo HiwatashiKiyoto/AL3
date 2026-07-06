@@ -1,0 +1,11 @@
+// command,x,y,z
+WAIT,60,,
+POP,30,2,35
+WAIT,120,,
+POP,-12,8,80
+WAIT,60,,
+POP,12,-8,105
+WAIT,120,,
+POP,-20,6,140
+WAIT,30,,
+POP,0,0,160
