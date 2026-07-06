@@ -42,6 +42,12 @@ void Enemy::Update()
 		return false;
 	});
 
+	if (--fireTimer_ <= 0)
+	{
+		Fire();
+		fireTimer_ = kFireInterval;
+	}
+
 	switch (phase_)
 	{
 	case Phase::Approach:
@@ -103,12 +109,6 @@ void Enemy::ApproachPhaseInitialize()
 
 void Enemy::UpdateApproach()
 {
-	if (--fireTimer_ <= 0)
-	{
-		Fire();
-		fireTimer_ = kFireInterval;
-	}
-
 	const Vector3 velocity = {0.0f, 0.0f, -0.1f};
 	worldTransform_.translation_ += velocity;
 

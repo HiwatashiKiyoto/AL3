@@ -29,6 +29,9 @@ public:
 	// Get world position
 	KamataEngine::Vector3 GetWorldPosition() const;
 
+	// Set parent world transform
+	void SetParent(const KamataEngine::WorldTransform* parent);
+
 	// Get bullets
 	const std::list<PlayerBullet*>& GetBullets() const { return bullets_; }
 

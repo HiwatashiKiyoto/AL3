@@ -3,6 +3,7 @@
 #include "KamataEngine.h"
 #include "Enemy.h"
 #include "Player.h"
+#include "RailCameraController.h"
 #include "Skydome.h"
 
 // Game scene
@@ -36,6 +37,9 @@ private:
 
 	// View projection
 	KamataEngine::Camera camera_;
+
+	// Rail camera
+	RailCameraController* railCamera_ = nullptr;
 
 	// Skydome
 	Skydome* skydome_ = nullptr;

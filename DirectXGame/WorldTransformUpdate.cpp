@@ -20,5 +20,9 @@ Matrix4x4 MakeAffineMatrix(const Vector3& scale, const Vector3& rotation, const 
 void UpdateWorldTransform(WorldTransform& worldTransform)
 {
 	worldTransform.matWorld_ = MakeAffineMatrix(worldTransform.scale_, worldTransform.rotation_, worldTransform.translation_);
+	if (worldTransform.parent_)
+	{
+		worldTransform.matWorld_ *= worldTransform.parent_->matWorld_;
+	}
 	worldTransform.TransferMatrix();
 }

@@ -25,6 +25,7 @@ GameScene::~GameScene()
 #endif
 	delete enemy_;
 	delete player_;
+	delete railCamera_;
 	delete skydome_;
 	delete modelSkydome_;
 	delete model_;
@@ -44,8 +45,12 @@ void GameScene::Initialize()
 	camera_.Initialize();
 	camera_.farZ = kCameraFarZ;
 
+	railCamera_ = new RailCameraController();
+	railCamera_->Initialize({0.0f, 2.0f, -50.0f}, {0.0f, 0.0f, 0.0f}, kCameraFarZ);
+
 	player_ = new Player();
 	player_->Initialize(model_, textureHandle_);
+	player_->SetParent(&railCamera_->GetWorldTransform());
 
 	skydome_ = new Skydome();
 	skydome_->Initialize(modelSkydome_);
@@ -65,6 +70,8 @@ void GameScene::Initialize()
 
 void GameScene::Updata()
 {
+	railCamera_->Update();
+
 	player_->Update();
 
 	if (enemy_)
@@ -114,7 +121,11 @@ void GameScene::Updata()
 	else
 #endif
 	{
-		camera_.UpdateMatrix();
+		const Camera& railCamera = railCamera_->GetCamera();
+		camera_.matView = railCamera.matView;
+		camera_.matProjection = railCamera.matProjection;
+		camera_.translation_ = railCamera.translation_;
+		camera_.TransferMatrix();
 	}
 
 }
