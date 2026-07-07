@@ -27,6 +27,7 @@ GameScene::~GameScene()
 	delete player_;
 	delete skydome_;
 	delete modelSkydome_;
+	delete modelPlayer_;
 	delete model_;
 
 	if (textureHandle_ != 0u)
@@ -39,13 +40,14 @@ void GameScene::Initialize()
 {
 	textureHandle_ = TextureManager::Load("white1x1.png");
 	model_ = Model::CreateFromOBJ("cube", true);
+	modelPlayer_ = Model::CreateFromOBJ("cat", true);
 	modelSkydome_ = Model::CreateFromOBJ("mySkydome", true);
 
 	camera_.Initialize();
 	camera_.farZ = kCameraFarZ;
 
 	player_ = new Player();
-	player_->Initialize(model_, textureHandle_);
+	player_->Initialize(modelPlayer_, model_, textureHandle_);
 
 	skydome_ = new Skydome();
 	skydome_->Initialize(modelSkydome_);

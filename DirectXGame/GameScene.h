@@ -31,6 +31,9 @@ private:
 	// 3D model data
 	KamataEngine::Model* model_ = nullptr;
 
+	// Player model data
+	KamataEngine::Model* modelPlayer_ = nullptr;
+
 	// Skydome model data
 	KamataEngine::Model* modelSkydome_ = nullptr;
 

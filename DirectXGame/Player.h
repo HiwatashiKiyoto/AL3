@@ -12,7 +12,7 @@ public:
 	~Player();
 
 	// Initialize
-	void Initialize(KamataEngine::Model* model, uint32_t textureHandle);
+	void Initialize(KamataEngine::Model* model, KamataEngine::Model* bulletModel, uint32_t textureHandle);
 
 	// Update
 	void Update();
@@ -51,6 +51,9 @@ private:
 
 	// Borrowed model data
 	KamataEngine::Model* model_ = nullptr;
+
+	// Borrowed bullet model data
+	KamataEngine::Model* bulletModel_ = nullptr;
 
 	// Texture handle
 	uint32_t textureHandle_ = 0u;

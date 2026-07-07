@@ -16,11 +16,13 @@ Player::~Player()
 	}
 }
 
-void Player::Initialize(Model* model, uint32_t textureHandle)
+void Player::Initialize(Model* model, Model* bulletModel, uint32_t textureHandle)
 {
 	assert(model);
+	assert(bulletModel);
 
 	model_ = model;
+	bulletModel_ = bulletModel;
 	textureHandle_ = textureHandle;
 	input_ = Input::GetInstance();
 
@@ -141,7 +143,7 @@ void Player::Attack()
 		velocity = TransformNormal(velocity, worldTransform_.matWorld_);
 
 		PlayerBullet* newBullet = new PlayerBullet();
-		newBullet->Initialize(model_, worldTransform_.translation_, velocity);
+		newBullet->Initialize(bulletModel_, worldTransform_.translation_, velocity);
 
 		bullets_.push_back(newBullet);
 	}
