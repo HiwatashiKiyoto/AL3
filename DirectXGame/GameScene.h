@@ -41,11 +41,14 @@ private:
 	void UpdateEnemyPopCommands();
 
 private:
-	// Texture handle
-	uint32_t textureHandle_ = 0u;
+	// Reticle texture handle
+	uint32_t textureReticle_ = 0u;
 
 	// 3D model data
 	KamataEngine::Model* model_ = nullptr;
+
+	// Player model data
+	KamataEngine::Model* modelPlayer_ = nullptr;
 
 	// Skydome model data
 	KamataEngine::Model* modelSkydome_ = nullptr;

@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cassert>
 #include <climits>
+#include <cmath>
 
 using namespace KamataEngine;
 using namespace KamataEngine::MathUtility;
@@ -40,11 +41,13 @@ Player::~Player()
 	}
 }
 
-void Player::Initialize(Model* model, uint32_t textureHandle)
+void Player::Initialize(Model* model, Model* bulletModel, uint32_t textureHandle)
 {
 	assert(model);
+	assert(bulletModel);
 
 	model_ = model;
+	bulletModel_ = bulletModel;
 	textureHandle_ = textureHandle;
 	input_ = Input::GetInstance();
 
@@ -54,8 +57,9 @@ void Player::Initialize(Model* model, uint32_t textureHandle)
 	worldTransform3DReticle_.Initialize();
 	worldTransform3DReticle_.scale_ = {0.8f, 0.8f, 0.8f};
 
-	sprite2DReticle_ = Sprite::Create(textureHandle_, {0.0f, 0.0f}, {1.0f, 1.0f, 1.0f, 0.65f}, {0.5f, 0.5f});
-	sprite2DReticle_->SetSize({32.0f, 32.0f});
+	sprite2DReticle_ = Sprite::Create(textureHandle_, {0.0f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {0.5f, 0.5f});
+	sprite2DReticle_->SetTextureRect({0.0f, 0.0f}, {128.0f, 128.0f});
+	sprite2DReticle_->SetSize({180.0f, 180.0f});
 }
 
 void Player::Update(const Camera& camera)
@@ -136,7 +140,6 @@ void Player::Update(const Camera& camera)
 void Player::Draw(const Camera& camera)
 {
 	model_->Draw(worldTransform_, camera);
-	model_->Draw(worldTransform3DReticle_, camera, textureHandle_);
 
 	for (PlayerBullet* bullet : bullets_)
 	{
@@ -146,10 +149,6 @@ void Player::Draw(const Camera& camera)
 
 void Player::DrawUI()
 {
-	if (sprite2DReticle_)
-	{
-		sprite2DReticle_->Draw();
-	}
 }
 
 Vector3 Player::GetWorldPosition() const
@@ -159,6 +158,17 @@ Vector3 Player::GetWorldPosition() const
 	worldPos.x = worldTransform_.matWorld_.m[3][0];
 	worldPos.y = worldTransform_.matWorld_.m[3][1];
 	worldPos.z = worldTransform_.matWorld_.m[3][2];
+
+	return worldPos;
+}
+
+Vector3 Player::Get3DReticleWorldPosition() const
+{
+	Vector3 worldPos;
+
+	worldPos.x = worldTransform3DReticle_.matWorld_.m[3][0];
+	worldPos.y = worldTransform3DReticle_.matWorld_.m[3][1];
+	worldPos.z = worldTransform3DReticle_.matWorld_.m[3][2];
 
 	return worldPos;
 }
@@ -197,12 +207,12 @@ void Player::Attack()
 	if (input_->TriggerKey(DIK_SPACE) || isGamepadShot)
 	{
 		const float kBulletSpeed = 1.0f;
-		Vector3 velocity = worldTransform3DReticle_.translation_ - GetWorldPosition();
+		Vector3 velocity = Get3DReticleWorldPosition() - GetWorldPosition();
 		Normalize(velocity);
 		velocity *= kBulletSpeed;
 
 		PlayerBullet* newBullet = new PlayerBullet();
-		newBullet->Initialize(model_, GetWorldPosition(), velocity);
+		newBullet->Initialize(bulletModel_, GetWorldPosition(), velocity);
 
 		bullets_.push_back(newBullet);
 	}
@@ -210,7 +220,7 @@ void Player::Attack()
 
 void Player::Update3DReticle()
 {
-	const float kDistancePlayerTo3DReticle = 50.0f;
+	const float kDistancePlayerTo3DReticle = 30.0f;
 	Vector3 offset = {0.0f, 0.0f, 1.0f};
 	offset = TransformNormal(offset, worldTransform_.matWorld_);
 	Normalize(offset);
@@ -223,16 +233,41 @@ void Player::Update3DReticle()
 
 void Player::Update2DReticle(const Camera& camera)
 {
-	if (!sprite2DReticle_)
-	{
-		return;
-	}
-
-	Vector3 positionReticle = worldTransform3DReticle_.translation_;
 	const Matrix4x4 matViewport =
 	    MakeViewportMatrix(0.0f, 0.0f, static_cast<float>(WinApp::kWindowWidth), static_cast<float>(WinApp::kWindowHeight), 0.0f, 1.0f);
 	const Matrix4x4 matViewProjectionViewport = camera.matView * camera.matProjection * matViewport;
-	positionReticle = Transform(positionReticle, matViewProjectionViewport);
 
-	sprite2DReticle_->SetPosition({positionReticle.x, positionReticle.y});
+	Vector3 positionPlayer = GetWorldPosition();
+	positionPlayer = TransformCoord(positionPlayer, matViewProjectionViewport);
+	position2DReticle_ = {positionPlayer.x, positionPlayer.y};
+
+	if (!std::isfinite(position2DReticle_.x) || !std::isfinite(position2DReticle_.y))
+	{
+		position2DReticle_ = {static_cast<float>(WinApp::kWindowWidth) / 2.0f, static_cast<float>(WinApp::kWindowHeight) / 2.0f};
+	}
+
+	const float kDistancePlayerTo2DReticle = 160.0f;
+	position2DReticle_.x += std::sin(worldTransform_.rotation_.y) * kDistancePlayerTo2DReticle;
+	position2DReticle_.y -= std::cos(worldTransform_.rotation_.y) * kDistancePlayerTo2DReticle;
+	position2DReticle_.y += 90.0f;
+
+	const float kReticleHalfSize = 90.0f;
+	position2DReticle_.x = std::clamp(position2DReticle_.x, kReticleHalfSize, static_cast<float>(WinApp::kWindowWidth) - kReticleHalfSize);
+	position2DReticle_.y = std::clamp(position2DReticle_.y, kReticleHalfSize, static_cast<float>(WinApp::kWindowHeight) - kReticleHalfSize);
+
+#ifdef USE_IMGUI
+	ImDrawList* drawList = ImGui::GetForegroundDrawList();
+	const ImVec2 center(position2DReticle_.x, position2DReticle_.y);
+	const ImU32 color = IM_COL32(96, 96, 96, 220);
+	const float radius = 34.0f;
+	const float gap = 8.0f;
+	const float lineLength = 22.0f;
+
+	drawList->AddCircle(center, radius, color, 48, 5.0f);
+	drawList->AddCircle(center, 7.0f, color, 32, 3.0f);
+	drawList->AddLine(ImVec2(center.x - radius - lineLength, center.y), ImVec2(center.x - gap, center.y), color, 5.0f);
+	drawList->AddLine(ImVec2(center.x + gap, center.y), ImVec2(center.x + radius + lineLength, center.y), color, 5.0f);
+	drawList->AddLine(ImVec2(center.x, center.y - radius - lineLength), ImVec2(center.x, center.y - gap), color, 5.0f);
+	drawList->AddLine(ImVec2(center.x, center.y + gap), ImVec2(center.x, center.y + radius + lineLength), color, 5.0f);
+#endif
 }

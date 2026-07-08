@@ -12,7 +12,7 @@ public:
 	~Player();
 
 	// Initialize
-	void Initialize(KamataEngine::Model* model, uint32_t textureHandle);
+	void Initialize(KamataEngine::Model* model, KamataEngine::Model* bulletModel, uint32_t textureHandle);
 
 	// Update
 	void Update(const KamataEngine::Camera& camera);
@@ -31,6 +31,9 @@ public:
 
 	// Get world position
 	KamataEngine::Vector3 GetWorldPosition() const;
+
+	// Get 3D reticle world position
+	KamataEngine::Vector3 Get3DReticleWorldPosition() const;
 
 	// Set parent world transform
 	void SetParent(const KamataEngine::WorldTransform* parent);
@@ -64,6 +67,9 @@ private:
 	// Borrowed model data
 	KamataEngine::Model* model_ = nullptr;
 
+	// Borrowed bullet model data
+	KamataEngine::Model* bulletModel_ = nullptr;
+
 	// Texture handle
 	uint32_t textureHandle_ = 0u;
 
@@ -72,6 +78,9 @@ private:
 
 	// 2D reticle sprite
 	KamataEngine::Sprite* sprite2DReticle_ = nullptr;
+
+	// 2D reticle screen position
+	KamataEngine::Vector2 position2DReticle_ = {};
 
 	// Bullets
 	std::list<PlayerBullet*> bullets_;

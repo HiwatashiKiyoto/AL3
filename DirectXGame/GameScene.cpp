@@ -39,18 +39,20 @@ GameScene::~GameScene()
 	delete railCamera_;
 	delete skydome_;
 	delete modelSkydome_;
+	delete modelPlayer_;
 	delete model_;
 
-	if (textureHandle_ != 0u)
+	if (textureReticle_ != 0u)
 	{
-		TextureManager::Unload(textureHandle_);
+		TextureManager::Unload(textureReticle_);
 	}
 }
 
 void GameScene::Initialize()
 {
-	textureHandle_ = TextureManager::Load("white1x1.png");
+	textureReticle_ = TextureManager::Load("standard_reticle.png");
 	model_ = Model::CreateFromOBJ("cube", true);
+	modelPlayer_ = Model::CreateFromOBJ("cat", true);
 	modelSkydome_ = Model::CreateFromOBJ("mySkydome", true);
 
 	camera_.Initialize();
@@ -60,7 +62,7 @@ void GameScene::Initialize()
 	railCamera_->Initialize({0.0f, 2.0f, -50.0f}, {0.0f, 0.0f, 0.0f}, kCameraFarZ);
 
 	player_ = new Player();
-	player_->Initialize(model_, textureHandle_);
+	player_->Initialize(modelPlayer_, model_, textureReticle_);
 	player_->SetParent(&railCamera_->GetWorldTransform());
 
 	skydome_ = new Skydome();
@@ -336,7 +338,7 @@ void GameScene::Draw()
 
 	Model::PostDraw();
 
-	Sprite::PreDraw();
+	Sprite::PreDraw(DirectXCommon::GetInstance()->GetCommandList());
 
 	player_->DrawUI();
 
