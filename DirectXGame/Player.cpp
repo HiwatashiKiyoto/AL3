@@ -1,5 +1,7 @@
 #include "Player.h"
 
+#include "Enemy.h"
+#include "LockOn.h"
 #include "WorldTransformUpdate.h"
 
 #include <algorithm>
@@ -33,8 +35,6 @@ bool IsGamepadButtonTriggered(const XINPUT_STATE& current, const XINPUT_STATE& p
 
 Player::~Player()
 {
-	delete sprite2DReticle_;
-
 	for (PlayerBullet* bullet : bullets_)
 	{
 		delete bullet;
@@ -45,10 +45,10 @@ void Player::Initialize(Model* model, Model* bulletModel, uint32_t textureHandle
 {
 	assert(model);
 	assert(bulletModel);
+	(void)textureHandle;
 
 	model_ = model;
 	bulletModel_ = bulletModel;
-	textureHandle_ = textureHandle;
 	input_ = Input::GetInstance();
 
 	worldTransform_.Initialize();
@@ -56,10 +56,6 @@ void Player::Initialize(Model* model, Model* bulletModel, uint32_t textureHandle
 
 	worldTransform3DReticle_.Initialize();
 	worldTransform3DReticle_.scale_ = {0.8f, 0.8f, 0.8f};
-
-	sprite2DReticle_ = Sprite::Create(textureHandle_, {0.0f, 0.0f}, {1.0f, 1.0f, 1.0f, 1.0f}, {0.5f, 0.5f});
-	sprite2DReticle_->SetTextureRect({0.0f, 0.0f}, {128.0f, 128.0f});
-	sprite2DReticle_->SetSize({180.0f, 180.0f});
 }
 
 void Player::Update(const Camera& camera)
@@ -207,7 +203,15 @@ void Player::Attack()
 	if (input_->TriggerKey(DIK_SPACE) || isGamepadShot)
 	{
 		const float kBulletSpeed = 1.0f;
-		Vector3 velocity = Get3DReticleWorldPosition() - GetWorldPosition();
+		Vector3 velocity = {};
+		if (lockOn_ != nullptr && lockOn_->ExistTarget())
+		{
+			velocity = lockOn_->GetTarget()->GetWorldPosition() - GetWorldPosition();
+		}
+		else
+		{
+			velocity = Get3DReticleWorldPosition() - GetWorldPosition();
+		}
 		Normalize(velocity);
 		velocity *= kBulletSpeed;
 
@@ -256,7 +260,7 @@ void Player::Update2DReticle(const Camera& camera)
 	position2DReticle_.y = std::clamp(position2DReticle_.y, kReticleHalfSize, static_cast<float>(WinApp::kWindowHeight) - kReticleHalfSize);
 
 #ifdef USE_IMGUI
-	ImDrawList* drawList = ImGui::GetForegroundDrawList();
+	ImDrawList* drawList = ImGui::GetForegroundDrawList(ImGui::GetMainViewport());
 	const ImVec2 center(position2DReticle_.x, position2DReticle_.y);
 	const ImU32 color = IM_COL32(96, 96, 96, 220);
 	const float radius = 34.0f;

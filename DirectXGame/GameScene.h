@@ -2,12 +2,14 @@
 
 #include "KamataEngine.h"
 #include "Enemy.h"
-#include "Player.h"
 #include "RailCameraController.h"
 #include "Skydome.h"
 
 #include <list>
 #include <sstream>
+
+class LockOn;
+class Player;
 
 // Game scene
 class GameScene
@@ -64,6 +66,9 @@ private:
 
 	// Player
 	Player* player_ = nullptr;
+
+	// Lock-on system
+	LockOn* lockOn_ = nullptr;
 
 	// Enemies
 	std::list<Enemy*> enemies_;

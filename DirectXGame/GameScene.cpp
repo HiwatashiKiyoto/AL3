@@ -1,5 +1,8 @@
 #include "GameScene.h"
 
+#include "LockOn.h"
+#include "Player.h"
+
 #include <cassert>
 #include <fstream>
 #include <string>
@@ -36,6 +39,7 @@ GameScene::~GameScene()
 		delete enemy;
 	}
 	delete player_;
+	delete lockOn_;
 	delete railCamera_;
 	delete skydome_;
 	delete modelSkydome_;
@@ -61,9 +65,13 @@ void GameScene::Initialize()
 	railCamera_ = new RailCameraController();
 	railCamera_->Initialize({0.0f, 2.0f, -50.0f}, {0.0f, 0.0f, 0.0f}, kCameraFarZ);
 
+	lockOn_ = new LockOn();
+	lockOn_->Initialize(textureReticle_);
+
 	player_ = new Player();
 	player_->Initialize(modelPlayer_, model_, textureReticle_);
 	player_->SetParent(&railCamera_->GetWorldTransform());
+	player_->SetLockOn(lockOn_);
 
 	skydome_ = new Skydome();
 	skydome_->Initialize(modelSkydome_);
@@ -126,6 +134,8 @@ void GameScene::Updata()
 	{
 		enemy->Update();
 	}
+
+	lockOn_->Update(player_, enemies_, camera_);
 
 	enemyBullets_.remove_if([](EnemyBullet* enemyBullet) {
 		if (enemyBullet->IsDead())
@@ -338,9 +348,4 @@ void GameScene::Draw()
 
 	Model::PostDraw();
 
-	Sprite::PreDraw(DirectXCommon::GetInstance()->GetCommandList());
-
-	player_->DrawUI();
-
-	Sprite::PostDraw();
 }

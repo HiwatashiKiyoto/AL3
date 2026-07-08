@@ -5,6 +5,8 @@
 
 #include <list>
 
+class LockOn;
+
 // Player character
 class Player
 {
@@ -35,8 +37,14 @@ public:
 	// Get 3D reticle world position
 	KamataEngine::Vector3 Get3DReticleWorldPosition() const;
 
+	// Get 2D reticle screen position
+	const KamataEngine::Vector2& Get2DReticlePosition() const { return position2DReticle_; }
+
 	// Set parent world transform
 	void SetParent(const KamataEngine::WorldTransform* parent);
+
+	// Set lock-on system
+	void SetLockOn(LockOn* lockOn) { lockOn_ = lockOn; }
 
 	// Get bullets
 	const std::list<PlayerBullet*>& GetBullets() const { return bullets_; }
@@ -70,17 +78,14 @@ private:
 	// Borrowed bullet model data
 	KamataEngine::Model* bulletModel_ = nullptr;
 
-	// Texture handle
-	uint32_t textureHandle_ = 0u;
-
 	// 3D reticle world transform data
 	KamataEngine::WorldTransform worldTransform3DReticle_;
 
-	// 2D reticle sprite
-	KamataEngine::Sprite* sprite2DReticle_ = nullptr;
-
 	// 2D reticle screen position
 	KamataEngine::Vector2 position2DReticle_ = {};
+
+	// Borrowed lock-on system
+	LockOn* lockOn_ = nullptr;
 
 	// Bullets
 	std::list<PlayerBullet*> bullets_;
