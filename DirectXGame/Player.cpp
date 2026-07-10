@@ -149,6 +149,11 @@ void Player::Draw(const Camera& camera)
 
 void Player::DrawUI()
 {
+	if (sprite2DReticle_)
+	{
+		sprite2DReticle_->SetPosition(position2DReticle_);
+		sprite2DReticle_->Draw();
+	}
 }
 
 Vector3 Player::GetWorldPosition() const
@@ -254,20 +259,4 @@ void Player::Update2DReticle(const Camera& camera)
 	const float kReticleHalfSize = 90.0f;
 	position2DReticle_.x = std::clamp(position2DReticle_.x, kReticleHalfSize, static_cast<float>(WinApp::kWindowWidth) - kReticleHalfSize);
 	position2DReticle_.y = std::clamp(position2DReticle_.y, kReticleHalfSize, static_cast<float>(WinApp::kWindowHeight) - kReticleHalfSize);
-
-#ifdef USE_IMGUI
-	ImDrawList* drawList = ImGui::GetForegroundDrawList();
-	const ImVec2 center(position2DReticle_.x, position2DReticle_.y);
-	const ImU32 color = IM_COL32(96, 96, 96, 220);
-	const float radius = 34.0f;
-	const float gap = 8.0f;
-	const float lineLength = 22.0f;
-
-	drawList->AddCircle(center, radius, color, 48, 5.0f);
-	drawList->AddCircle(center, 7.0f, color, 32, 3.0f);
-	drawList->AddLine(ImVec2(center.x - radius - lineLength, center.y), ImVec2(center.x - gap, center.y), color, 5.0f);
-	drawList->AddLine(ImVec2(center.x + gap, center.y), ImVec2(center.x + radius + lineLength, center.y), color, 5.0f);
-	drawList->AddLine(ImVec2(center.x, center.y - radius - lineLength), ImVec2(center.x, center.y - gap), color, 5.0f);
-	drawList->AddLine(ImVec2(center.x, center.y + gap), ImVec2(center.x, center.y + radius + lineLength), color, 5.0f);
-#endif
 }
