@@ -2,6 +2,7 @@
 
 #include "KamataEngine.h"
 #include "Enemy.h"
+#include "Ground.h"
 #include "Player.h"
 #include "Skydome.h"
 
@@ -37,11 +38,17 @@ private:
 	// Skydome model data
 	KamataEngine::Model* modelSkydome_ = nullptr;
 
+	// Ground model data
+	KamataEngine::Model* modelGround_ = nullptr;
+
 	// View projection
 	KamataEngine::Camera camera_;
 
 	// Skydome
 	Skydome* skydome_ = nullptr;
+
+	// Ground
+	Ground* ground_ = nullptr;
 
 	// Player
 	Player* player_ = nullptr;

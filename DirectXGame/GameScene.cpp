@@ -25,7 +25,9 @@ GameScene::~GameScene()
 #endif
 	delete enemy_;
 	delete player_;
+	delete ground_;
 	delete skydome_;
+	delete modelGround_;
 	delete modelSkydome_;
 	delete modelPlayer_;
 	delete model_;
@@ -42,6 +44,7 @@ void GameScene::Initialize()
 	model_ = Model::CreateFromOBJ("cube", true);
 	modelPlayer_ = Model::CreateFromOBJ("cat", true);
 	modelSkydome_ = Model::CreateFromOBJ("mySkydome", true);
+	modelGround_ = Model::CreateFromOBJ("ground", true);
 
 	camera_.Initialize();
 	camera_.farZ = kCameraFarZ;
@@ -51,6 +54,9 @@ void GameScene::Initialize()
 
 	skydome_ = new Skydome();
 	skydome_->Initialize(modelSkydome_);
+
+	ground_ = new Ground();
+	ground_->Initialize(modelGround_);
 
 	enemy_ = new Enemy();
 	enemy_->Initialize(model_, {30.0f, 2.0f, 35.0f});
@@ -75,6 +81,7 @@ void GameScene::Updata()
 	}
 
 	skydome_->Update();
+	ground_->Update();
 
 	CheckAllCollisions();
 
@@ -192,6 +199,8 @@ void GameScene::Draw()
 	Model::PostDraw();
 
 	Model::PreDraw();
+
+	ground_->Draw(camera_);
 
 	player_->Draw(camera_);
 
