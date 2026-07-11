@@ -16,11 +16,13 @@ Enemy::~Enemy()
 	}
 }
 
-void Enemy::Initialize(Model* model, const Vector3& position)
+void Enemy::Initialize(Model* model, Model* bulletModel, const Vector3& position)
 {
 	assert(model);
+	assert(bulletModel);
 
 	model_ = model;
+	bulletModel_ = bulletModel;
 	textureHandle_ = TextureManager::Load("white1x1.png");
 	phase_ = Phase::Approach;
 	ApproachPhaseInitialize();
@@ -91,7 +93,7 @@ void Enemy::Fire()
 	velocity *= kBulletSpeed;
 
 	EnemyBullet* newBullet = new EnemyBullet();
-	newBullet->Initialize(model_, enemyPosition, velocity);
+	newBullet->Initialize(bulletModel_, enemyPosition, velocity);
 
 	bullets_.push_back(newBullet);
 }

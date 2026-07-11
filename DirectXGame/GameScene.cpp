@@ -30,6 +30,8 @@ GameScene::~GameScene()
 	delete modelGround_;
 	delete modelSkydome_;
 	delete modelPlayer_;
+	delete modelPlayerBullet_;
+	delete modelEnemyBullet_;
 	delete model_;
 
 	if (textureHandle_ != 0u)
@@ -43,6 +45,8 @@ void GameScene::Initialize()
 	textureHandle_ = TextureManager::Load("white1x1.png");
 	model_ = Model::CreateFromOBJ("cube", true);
 	modelPlayer_ = Model::CreateFromOBJ("cat", true);
+	modelPlayerBullet_ = Model::CreateFromOBJ("fishbone", true);
+	modelEnemyBullet_ = Model::CreateFromOBJ("cube", true);
 	modelSkydome_ = Model::CreateFromOBJ("mySkydome", true);
 	modelGround_ = Model::CreateFromOBJ("ground", true);
 
@@ -50,7 +54,7 @@ void GameScene::Initialize()
 	camera_.farZ = kCameraFarZ;
 
 	player_ = new Player();
-	player_->Initialize(modelPlayer_, model_, textureHandle_);
+	player_->Initialize(modelPlayer_, modelPlayerBullet_, textureHandle_);
 
 	skydome_ = new Skydome();
 	skydome_->Initialize(modelSkydome_);
@@ -59,7 +63,7 @@ void GameScene::Initialize()
 	ground_->Initialize(modelGround_);
 
 	enemy_ = new Enemy();
-	enemy_->Initialize(model_, {30.0f, 2.0f, 35.0f});
+	enemy_->Initialize(model_, modelEnemyBullet_, {30.0f, 2.0f, 35.0f});
 	enemy_->SetPlayer(player_);
 
 #ifdef _DEBUG

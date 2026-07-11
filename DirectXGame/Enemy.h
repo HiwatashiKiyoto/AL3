@@ -27,8 +27,9 @@ public:
 	/// Initialize
 	/// </summary>
 	/// <param name="model">Model</param>
+	/// <param name="bulletModel">Bullet model</param>
 	/// <param name="position">Initial position</param>
-	void Initialize(KamataEngine::Model* model, const KamataEngine::Vector3& position);
+	void Initialize(KamataEngine::Model* model, KamataEngine::Model* bulletModel, const KamataEngine::Vector3& position);
 
 	/// <summary>
 	/// Update
@@ -81,6 +82,9 @@ private:
 
 	// Borrowed model data
 	KamataEngine::Model* model_ = nullptr;
+
+	// Borrowed bullet model data
+	KamataEngine::Model* bulletModel_ = nullptr;
 
 	// Borrowed player data
 	Player* player_ = nullptr;

@@ -35,6 +35,12 @@ private:
 	// Player model data
 	KamataEngine::Model* modelPlayer_ = nullptr;
 
+	// Player bullet model data
+	KamataEngine::Model* modelPlayerBullet_ = nullptr;
+
+	// Enemy bullet model data
+	KamataEngine::Model* modelEnemyBullet_ = nullptr;
+
 	// Skydome model data
 	KamataEngine::Model* modelSkydome_ = nullptr;
 
