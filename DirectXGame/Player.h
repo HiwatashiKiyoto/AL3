@@ -6,6 +6,7 @@
 #include <list>
 
 class LockOn;
+class Boss;
 
 // Player character
 class Player
@@ -14,13 +15,21 @@ public:
 	~Player();
 
 	// Initialize
-	void Initialize(KamataEngine::Model* model, KamataEngine::Model* bulletModel, uint32_t textureHandle);
+	void Initialize(
+	    KamataEngine::Model* model, KamataEngine::Model* bulletModel,
+	    uint32_t reticleTextureHandle, uint32_t bulletTextureHandle);
 
 	// Update
 	void Update(const KamataEngine::Camera& camera);
 
 	// Draw
 	void Draw(const KamataEngine::Camera& camera);
+	void DrawTrainingOutlineDark(const KamataEngine::Camera& camera);
+	void DrawTrainingOutlineGlow(const KamataEngine::Camera& camera);
+
+	// Draw player-bullet effect passes.
+	void DrawBulletTrails(const KamataEngine::Camera& camera);
+	void DrawBulletOutlines(const KamataEngine::Camera& camera);
 
 	// Draw UI
 	void DrawUI();
@@ -45,6 +54,7 @@ public:
 
 	// Set lock-on system
 	void SetLockOn(LockOn* lockOn) { lockOn_ = lockOn; }
+	void SetBossTarget(Boss* boss) { bossTarget_ = boss; }
 
 	// Get bullets
 	const std::list<PlayerBullet*>& GetBullets() const { return bullets_; }
@@ -52,10 +62,14 @@ public:
 	// Callback function called when collision is detected
 	void OnCollision();
 
-private:
-	// Rotate
-	void Rotate();
+	// Remaining health
+	int32_t GetHealth() const { return health_; }
+	int32_t GetMaxHealth() const { return kMaxHealth; }
+	bool IsDead() const { return health_ <= 0; }
+	void SetAttackEnabled(bool enabled) { isAttackEnabled_ = enabled; }
+	void SetDebugUIEnabled(bool enabled) { isDebugUIEnabled_ = enabled; }
 
+private:
 	// Attack
 	void Attack();
 
@@ -71,12 +85,17 @@ private:
 
 	// World transform data
 	KamataEngine::WorldTransform worldTransform_;
+	KamataEngine::WorldTransform outlineDarkTransform_;
+	KamataEngine::WorldTransform outlineGlowTransform_;
+	KamataEngine::ObjectColor outlineDarkColor_;
+	KamataEngine::ObjectColor outlineGlowColor_;
 
 	// Borrowed model data
 	KamataEngine::Model* model_ = nullptr;
 
 	// Borrowed bullet model data
 	KamataEngine::Model* bulletModel_ = nullptr;
+	uint32_t bulletTextureHandle_ = 0u;
 
 	// 3D reticle world transform data
 	KamataEngine::WorldTransform worldTransform3DReticle_;
@@ -84,9 +103,23 @@ private:
 	// 2D reticle screen position
 	KamataEngine::Vector2 position2DReticle_ = {};
 
+	// 2D reticle sprite
+	KamataEngine::Sprite* sprite2DReticle_ = nullptr;
+
 	// Borrowed lock-on system
 	LockOn* lockOn_ = nullptr;
+	Boss* bossTarget_ = nullptr;
 
 	// Bullets
 	std::list<PlayerBullet*> bullets_;
+
+	// Health and post-hit invincibility
+	static constexpr int32_t kMaxHealth = 3;
+	static constexpr int32_t kInvincibleFrameCount = 90;
+	static constexpr int32_t kAttackCooldownFrameCount = 30;
+	int32_t health_ = kMaxHealth;
+	int32_t invincibleTimer_ = 0;
+	int32_t attackCooldownTimer_ = 0;
+	bool isAttackEnabled_ = true;
+	bool isDebugUIEnabled_ = true;
 };

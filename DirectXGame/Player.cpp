@@ -1,6 +1,9 @@
 #include "Player.h"
 
+#include "GameAudio.h"
+
 #include "Enemy.h"
+#include "Boss.h"
 #include "LockOn.h"
 #include "WorldTransformUpdate.h"
 
@@ -14,19 +17,6 @@ using namespace KamataEngine::MathUtility;
 
 namespace
 {
-Matrix4x4 MakeViewportMatrix(float left, float top, float width, float height, float minDepth, float maxDepth)
-{
-	Matrix4x4 result = MakeIdentityMatrix();
-	result.m[0][0] = width / 2.0f;
-	result.m[1][1] = -height / 2.0f;
-	result.m[2][2] = maxDepth - minDepth;
-	result.m[3][0] = left + width / 2.0f;
-	result.m[3][1] = top + height / 2.0f;
-	result.m[3][2] = minDepth;
-
-	return result;
-}
-
 bool IsGamepadButtonTriggered(const XINPUT_STATE& current, const XINPUT_STATE& previous, WORD button)
 {
 	return (current.Gamepad.wButtons & button) != 0 && (previous.Gamepad.wButtons & button) == 0;
@@ -35,31 +25,59 @@ bool IsGamepadButtonTriggered(const XINPUT_STATE& current, const XINPUT_STATE& p
 
 Player::~Player()
 {
+	delete sprite2DReticle_;
+
 	for (PlayerBullet* bullet : bullets_)
 	{
 		delete bullet;
 	}
 }
 
-void Player::Initialize(Model* model, Model* bulletModel, uint32_t textureHandle)
+void Player::Initialize(Model* model, Model* bulletModel, uint32_t reticleTextureHandle, uint32_t bulletTextureHandle)
 {
 	assert(model);
 	assert(bulletModel);
-	(void)textureHandle;
 
 	model_ = model;
 	bulletModel_ = bulletModel;
+	bulletTextureHandle_ = bulletTextureHandle;
 	input_ = Input::GetInstance();
+	health_ = kMaxHealth;
+	invincibleTimer_ = 0;
+	attackCooldownTimer_ = 0;
 
 	worldTransform_.Initialize();
 	worldTransform_.translation_ = {0.0f, 0.0f, 50.0f};
+	outlineDarkTransform_.Initialize();
+	outlineDarkTransform_.scale_ = {1.38f, 1.38f, 1.38f};
+	outlineGlowTransform_.Initialize();
+	outlineGlowTransform_.scale_ = {1.20f, 1.20f, 1.20f};
+	outlineDarkColor_.Initialize();
+	outlineDarkColor_.SetColor({0.015f, 0.035f, 0.09f, 1.0f});
+	outlineGlowColor_.Initialize();
+	outlineGlowColor_.SetColor({1.0f, 0.28f, 0.02f, 1.0f});
 
 	worldTransform3DReticle_.Initialize();
 	worldTransform3DReticle_.scale_ = {0.8f, 0.8f, 0.8f};
+
+	position2DReticle_ = {static_cast<float>(WinApp::kWindowWidth) / 2.0f, static_cast<float>(WinApp::kWindowHeight) / 2.0f};
+	sprite2DReticle_ = Sprite::Create(reticleTextureHandle, position2DReticle_, {1.0f, 1.0f, 1.0f, 1.0f}, {0.5f, 0.5f});
+	assert(sprite2DReticle_);
 }
 
 void Player::Update(const Camera& camera)
 {
+	(void)camera;
+
+	if (invincibleTimer_ > 0)
+	{
+		--invincibleTimer_;
+	}
+	if (attackCooldownTimer_ > 0)
+	{
+		--attackCooldownTimer_;
+	}
+
 	bullets_.remove_if([](PlayerBullet* bullet) {
 		if (bullet->IsDead())
 		{
@@ -69,8 +87,6 @@ void Player::Update(const Camera& camera)
 
 		return false;
 	});
-
-	Rotate();
 
 	Vector3 move = {0.0f, 0.0f, 0.0f};
 	const float kCharacterSpeed = 0.2f;
@@ -113,15 +129,24 @@ void Player::Update(const Camera& camera)
 	worldTransform_.translation_.y = std::clamp(worldTransform_.translation_.y, -kMoveLimitY, kMoveLimitY);
 
 #ifdef USE_IMGUI
-	ImGui::Begin("Player");
-	ImGui::DragFloat3("Position", &worldTransform_.translation_.x, 0.01f);
-	ImGui::End();
+	if (isDebugUIEnabled_)
+	{
+		ImGui::Begin("Player");
+		ImGui::DragFloat3("Position", &worldTransform_.translation_.x, 0.01f);
+		ImGui::End();
+	}
 #endif
 
 	worldTransform_.translation_.x = std::clamp(worldTransform_.translation_.x, -kMoveLimitX, kMoveLimitX);
 	worldTransform_.translation_.y = std::clamp(worldTransform_.translation_.y, -kMoveLimitY, kMoveLimitY);
 
 	UpdateWorldTransform(worldTransform_);
+	outlineDarkTransform_.rotation_ = worldTransform_.rotation_;
+	outlineDarkTransform_.translation_ = worldTransform_.translation_;
+	outlineGlowTransform_.rotation_ = worldTransform_.rotation_;
+	outlineGlowTransform_.translation_ = worldTransform_.translation_;
+	UpdateWorldTransform(outlineDarkTransform_);
+	UpdateWorldTransform(outlineGlowTransform_);
 	Update3DReticle();
 	Update2DReticle(camera);
 
@@ -135,7 +160,11 @@ void Player::Update(const Camera& camera)
 
 void Player::Draw(const Camera& camera)
 {
-	model_->Draw(worldTransform_, camera);
+	// Blink only the player model after taking damage. Bullets remain visible.
+	if (invincibleTimer_ == 0 || ((invincibleTimer_ / 4) % 2) == 0)
+	{
+		model_->Draw(worldTransform_, camera);
+	}
 
 	for (PlayerBullet* bullet : bullets_)
 	{
@@ -143,8 +172,36 @@ void Player::Draw(const Camera& camera)
 	}
 }
 
+void Player::DrawTrainingOutlineDark(const Camera& camera)
+{
+	model_->Draw(outlineDarkTransform_, camera, &outlineDarkColor_);
+}
+
+void Player::DrawTrainingOutlineGlow(const Camera& camera)
+{
+	model_->Draw(outlineGlowTransform_, camera, &outlineGlowColor_);
+}
+
+void Player::DrawBulletTrails(const Camera& camera)
+{
+	for (PlayerBullet* bullet : bullets_)
+	{
+		bullet->DrawTrail(camera);
+	}
+}
+
+void Player::DrawBulletOutlines(const Camera& camera)
+{
+	for (PlayerBullet* bullet : bullets_)
+	{
+		bullet->DrawOutline(camera);
+	}
+}
+
 void Player::DrawUI()
 {
+	sprite2DReticle_->SetPosition(position2DReticle_);
+	sprite2DReticle_->Draw();
 }
 
 Vector3 Player::GetWorldPosition() const
@@ -172,39 +229,49 @@ Vector3 Player::Get3DReticleWorldPosition() const
 void Player::SetParent(const WorldTransform* parent)
 {
 	worldTransform_.parent_ = parent;
+	outlineDarkTransform_.parent_ = parent;
+	outlineGlowTransform_.parent_ = parent;
 }
 
 void Player::OnCollision()
 {
-}
-
-void Player::Rotate()
-{
-	const float kRotSpeed = 0.02f;
-
-	if (input_->PushKey(DIK_A))
+	if (invincibleTimer_ > 0 || IsDead())
 	{
-		worldTransform_.rotation_.y -= kRotSpeed;
+		return;
 	}
-	else if (input_->PushKey(DIK_D))
+
+	GameAudio::GetInstance()->PlaySe(GameAudio::Se::PlayerHit);
+	--health_;
+	if (health_ > 0)
 	{
-		worldTransform_.rotation_.y += kRotSpeed;
+		invincibleTimer_ = kInvincibleFrameCount;
 	}
 }
 
 void Player::Attack()
 {
+	if (!isAttackEnabled_ || attackCooldownTimer_ > 0)
+	{
+		return;
+	}
+
 	XINPUT_STATE joyState{};
 	XINPUT_STATE joyStatePre{};
 	const bool isGamepadShot =
 	    input_->GetJoystickState(0, joyState) && input_->GetJoystickStatePrevious(0, joyStatePre) &&
-	    IsGamepadButtonTriggered(joyState, joyStatePre, XINPUT_GAMEPAD_RIGHT_SHOULDER);
+	    IsGamepadButtonTriggered(joyState, joyStatePre, XINPUT_GAMEPAD_A);
 
 	if (input_->TriggerKey(DIK_SPACE) || isGamepadShot)
 	{
+		attackCooldownTimer_ = kAttackCooldownFrameCount;
+		GameAudio::GetInstance()->PlaySe(GameAudio::Se::PlayerShot);
 		const float kBulletSpeed = 1.0f;
 		Vector3 velocity = {};
-		if (lockOn_ != nullptr && lockOn_->ExistTarget())
+		if (bossTarget_ != nullptr && !bossTarget_->IsDead())
+		{
+			velocity = bossTarget_->GetWorldPosition() - GetWorldPosition();
+		}
+		else if (lockOn_ != nullptr && lockOn_->ExistTarget())
 		{
 			velocity = lockOn_->GetTarget()->GetWorldPosition() - GetWorldPosition();
 		}
@@ -216,7 +283,7 @@ void Player::Attack()
 		velocity *= kBulletSpeed;
 
 		PlayerBullet* newBullet = new PlayerBullet();
-		newBullet->Initialize(bulletModel_, GetWorldPosition(), velocity);
+		newBullet->Initialize(bulletModel_, bulletTextureHandle_, GetWorldPosition(), velocity);
 
 		bullets_.push_back(newBullet);
 	}
@@ -237,41 +304,6 @@ void Player::Update3DReticle()
 
 void Player::Update2DReticle(const Camera& camera)
 {
-	const Matrix4x4 matViewport =
-	    MakeViewportMatrix(0.0f, 0.0f, static_cast<float>(WinApp::kWindowWidth), static_cast<float>(WinApp::kWindowHeight), 0.0f, 1.0f);
-	const Matrix4x4 matViewProjectionViewport = camera.matView * camera.matProjection * matViewport;
-
-	Vector3 positionPlayer = GetWorldPosition();
-	positionPlayer = TransformCoord(positionPlayer, matViewProjectionViewport);
-	position2DReticle_ = {positionPlayer.x, positionPlayer.y};
-
-	if (!std::isfinite(position2DReticle_.x) || !std::isfinite(position2DReticle_.y))
-	{
-		position2DReticle_ = {static_cast<float>(WinApp::kWindowWidth) / 2.0f, static_cast<float>(WinApp::kWindowHeight) / 2.0f};
-	}
-
-	const float kDistancePlayerTo2DReticle = 160.0f;
-	position2DReticle_.x += std::sin(worldTransform_.rotation_.y) * kDistancePlayerTo2DReticle;
-	position2DReticle_.y -= std::cos(worldTransform_.rotation_.y) * kDistancePlayerTo2DReticle;
-	position2DReticle_.y += 90.0f;
-
-	const float kReticleHalfSize = 90.0f;
-	position2DReticle_.x = std::clamp(position2DReticle_.x, kReticleHalfSize, static_cast<float>(WinApp::kWindowWidth) - kReticleHalfSize);
-	position2DReticle_.y = std::clamp(position2DReticle_.y, kReticleHalfSize, static_cast<float>(WinApp::kWindowHeight) - kReticleHalfSize);
-
-#ifdef USE_IMGUI
-	ImDrawList* drawList = ImGui::GetForegroundDrawList(ImGui::GetMainViewport());
-	const ImVec2 center(position2DReticle_.x, position2DReticle_.y);
-	const ImU32 color = IM_COL32(96, 96, 96, 220);
-	const float radius = 34.0f;
-	const float gap = 8.0f;
-	const float lineLength = 22.0f;
-
-	drawList->AddCircle(center, radius, color, 48, 5.0f);
-	drawList->AddCircle(center, 7.0f, color, 32, 3.0f);
-	drawList->AddLine(ImVec2(center.x - radius - lineLength, center.y), ImVec2(center.x - gap, center.y), color, 5.0f);
-	drawList->AddLine(ImVec2(center.x + gap, center.y), ImVec2(center.x + radius + lineLength, center.y), color, 5.0f);
-	drawList->AddLine(ImVec2(center.x, center.y - radius - lineLength), ImVec2(center.x, center.y - gap), color, 5.0f);
-	drawList->AddLine(ImVec2(center.x, center.y + gap), ImVec2(center.x, center.y + radius + lineLength), color, 5.0f);
-#endif
+	(void)camera;
+	position2DReticle_ = {static_cast<float>(WinApp::kWindowWidth) / 2.0f, static_cast<float>(WinApp::kWindowHeight) / 2.0f};
 }

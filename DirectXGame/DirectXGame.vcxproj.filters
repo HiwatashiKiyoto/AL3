@@ -18,6 +18,18 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+	<ClCompile Include="AnimatedModel.cpp">
+	  <Filter>ソース ファイル</Filter>
+	</ClCompile>
+	<ClCompile Include="ThirdParty\ufbx\ufbx.cpp">
+	  <Filter>ソース ファイル</Filter>
+	</ClCompile>
+	<ClCompile Include="CatmullRomSpline.cpp">
+	  <Filter>ソース ファイル</Filter>
+	</ClCompile>
+	<ClCompile Include="Boss.cpp">
+	  <Filter>ソース ファイル</Filter>
+	</ClCompile>
     <ClCompile Include="Enemy.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -36,6 +48,9 @@
     <ClCompile Include="Player.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+	<ClCompile Include="PauseMenu.cpp">
+	  <Filter>ソース ファイル</Filter>
+	</ClCompile>
     <ClCompile Include="PlayerBullet.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
@@ -48,6 +63,9 @@
     <ClCompile Include="Skydome.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+	<ClCompile Include="TutorialScene.cpp">
+	  <Filter>ソース ファイル</Filter>
+	</ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Resources\shaders\SpritePS.hlsl">
@@ -82,6 +100,13 @@
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
+	<None Include="Resources\shaders\AnimatedModelVS.hlsl">
+	  <Filter>シェーダー ファイル</Filter>
+	</None>
+	<None Include="Resources\shaders\AnimatedModelPS.hlsl">
+	  <Filter>シェーダー ファイル</Filter>
+	</None>
+	<None Include="ThirdParty\ufbx\LICENSE" />
     <None Include="Resources\enemyPop.csv">
       <Filter>リソース ファイル</Filter>
     </None>
@@ -102,6 +127,18 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+	<ClInclude Include="AnimatedModel.h">
+	  <Filter>ヘッダー ファイル</Filter>
+	</ClInclude>
+	<ClInclude Include="ThirdParty\ufbx\ufbx.h">
+	  <Filter>ヘッダー ファイル</Filter>
+	</ClInclude>
+	<ClInclude Include="CatmullRomSpline.h">
+	  <Filter>ヘッダー ファイル</Filter>
+	</ClInclude>
+	<ClInclude Include="Boss.h">
+	  <Filter>ヘッダー ファイル</Filter>
+	</ClInclude>
     <ClInclude Include="Enemy.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -117,6 +154,9 @@
     <ClInclude Include="Player.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+	<ClInclude Include="PauseMenu.h">
+	  <Filter>ヘッダー ファイル</Filter>
+	</ClInclude>
     <ClInclude Include="PlayerBullet.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
@@ -129,5 +169,8 @@
     <ClInclude Include="Skydome.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+	<ClInclude Include="TutorialScene.h">
+	  <Filter>ヘッダー ファイル</Filter>
+	</ClInclude>
   </ItemGroup>
 </Project>

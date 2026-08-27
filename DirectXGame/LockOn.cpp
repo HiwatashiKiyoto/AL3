@@ -1,6 +1,7 @@
 #include "LockOn.h"
 
 #include "Enemy.h"
+#include "GameAudio.h"
 #include "Player.h"
 
 #include <algorithm>
@@ -12,17 +13,20 @@ using namespace KamataEngine::MathUtility;
 
 LockOn::~LockOn()
 {
+	delete spriteReticle_;
 }
 
 void LockOn::Initialize(uint32_t textureHandle)
 {
-	(void)textureHandle;
+	spriteReticle_ = Sprite::Create(textureHandle, targetScreenPosition_, {1.0f, 1.0f, 1.0f, 1.0f}, {0.5f, 0.5f});
+	assert(spriteReticle_);
 }
 
 void LockOn::Update(Player* player, const std::list<Enemy*>& enemies, const Camera& camera)
 {
 	assert(player);
 
+	const bool hadTarget = target_ != nullptr;
 	target_ = nullptr;
 	std::list<std::pair<float, Enemy*>> targets;
 
@@ -67,29 +71,21 @@ void LockOn::Update(Player* player, const std::list<Enemy*>& enemies, const Came
 		targetScreenPosition_ = {targetScreen.x, targetScreen.y};
 	}
 
-	Draw();
+	const bool hasTarget = target_ != nullptr;
+	if (hasTarget != hadTarget)
+	{
+		GameAudio::GetInstance()->PlaySe(hasTarget ? GameAudio::Se::LockOn : GameAudio::Se::LockOff);
+	}
+
 }
 
 void LockOn::Draw()
 {
-#ifdef USE_IMGUI
-	if (target_ != nullptr)
+	if (target_ != nullptr && spriteReticle_ != nullptr)
 	{
-		ImDrawList* drawList = ImGui::GetForegroundDrawList(ImGui::GetMainViewport());
-		const ImVec2 center(targetScreenPosition_.x, targetScreenPosition_.y);
-		const ImU32 color = IM_COL32(220, 210, 32, 230);
-		const float radius = 38.0f;
-		const float gap = 10.0f;
-		const float lineLength = 20.0f;
-
-		drawList->AddCircle(center, radius, color, 48, 5.0f);
-		drawList->AddCircle(center, 8.0f, color, 32, 3.0f);
-		drawList->AddLine(ImVec2(center.x - radius - lineLength, center.y), ImVec2(center.x - gap, center.y), color, 5.0f);
-		drawList->AddLine(ImVec2(center.x + gap, center.y), ImVec2(center.x + radius + lineLength, center.y), color, 5.0f);
-		drawList->AddLine(ImVec2(center.x, center.y - radius - lineLength), ImVec2(center.x, center.y - gap), color, 5.0f);
-		drawList->AddLine(ImVec2(center.x, center.y + gap), ImVec2(center.x, center.y + radius + lineLength), color, 5.0f);
+		spriteReticle_->SetPosition(targetScreenPosition_);
+		spriteReticle_->Draw();
 	}
-#endif
 }
 
 Vector3 LockOn::Project(

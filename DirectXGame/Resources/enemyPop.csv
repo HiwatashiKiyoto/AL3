@@ -1,11 +1,12 @@
-// command,x,y,z
+// command,x,y,z,behavior
+// behavior: 0=straight, 1=move left, 2=move right, 3=zigzag
 WAIT,60,,
-POP,30,2,35
+POP,10,2,35,1
 WAIT,120,,
-POP,-12,8,80
+POP,-10,6,80,2
 WAIT,60,,
-POP,12,-8,105
+POP,10,-6,105,3
 WAIT,120,,
-POP,-20,6,140
+POP,-12,5,140,2
 WAIT,30,,
-POP,0,0,160
+POP,0,0,160,0

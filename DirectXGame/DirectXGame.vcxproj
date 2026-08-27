@@ -163,16 +163,31 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
+	<ClCompile Include="AnimatedModel.cpp">
+	  <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">MaxSpeed</Optimization>
+	  <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Default</BasicRuntimeChecks>
+	</ClCompile>
+	<ClCompile Include="CatmullRomSpline.cpp" />
+	<ClCompile Include="GameAudio.cpp" />
+	<ClCompile Include="LoadingScene.cpp" />
+	<ClCompile Include="Boss.cpp" />
     <ClCompile Include="Enemy.cpp" />
     <ClCompile Include="EnemyBullet.cpp" />
     <ClCompile Include="GameScene.cpp" />
     <ClCompile Include="LockOn.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Player.cpp" />
+	<ClCompile Include="PauseMenu.cpp" />
     <ClCompile Include="PlayerBullet.cpp" />
     <ClCompile Include="RailCameraController.cpp" />
     <ClCompile Include="Skydome.cpp" />
+	<ClCompile Include="TutorialScene.cpp" />
     <ClCompile Include="WorldTransformUpdate.cpp" />
+	<ClCompile Include="ThirdParty\ufbx\ufbx.cpp">
+	  <WarningLevel>TurnOffAllWarnings</WarningLevel>
+	  <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">MaxSpeed</Optimization>
+	  <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Default</BasicRuntimeChecks>
+	</ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Resources\shaders\TerrainPS.hlsl">
@@ -193,6 +208,9 @@
     </FxCompile>
     <None Include="Resources\shaders\Obj.hlsli" />
     <None Include="Resources\shaders\Primitive.hlsli" />
+	<None Include="Resources\shaders\AnimatedModelVS.hlsl" />
+	<None Include="Resources\shaders\AnimatedModelPS.hlsl" />
+	<None Include="ThirdParty\ufbx\LICENSE" />
     <None Include="Resources\shaders\Shape.hlsli">
       <FileType>Document</FileType>
     </None>
@@ -270,17 +288,47 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\enemyPop.csv" />
+	<None Include="Resources\music\boss.mp3" />
+	<None Include="Resources\music\cancel.mp3" />
+	<None Include="Resources\music\danger.mp3" />
+	<None Include="Resources\music\deside.mp3" />
+	<None Include="Resources\music\enemyShot.mp3" />
+	<None Include="Resources\music\gameClear.mp3" />
+	<None Include="Resources\music\gameOver.mp3" />
+	<None Include="Resources\music\gamePlay.mp3" />
+	<None Include="Resources\music\hit.mp3" />
+	<None Include="Resources\music\playerHit.mp3" />
+	<None Include="Resources\music\poseCancel.mp3" />
+	<None Include="Resources\music\poseStart.mp3" />
+	<None Include="Resources\music\roar.mp3" />
+	<None Include="Resources\music\rockOff.mp3" />
+	<None Include="Resources\music\rockOn.mp3" />
+	<None Include="Resources\music\select.mp3" />
+	<None Include="Resources\music\shot.mp3" />
+	<None Include="Resources\music\title.mp3" />
+	<None Include="Resources\music\tutorial.mp3" />
+	<None Include="Resources\roadScene.fbx" />
+	<None Include="Resources\ObjectiveEnemies.png" />
+	<None Include="Resources\ObjectiveBoss.png" />
     <None Include="Resources\shaders\Sprite.hlsli" />
   </ItemGroup>
   <ItemGroup>
+	<ClInclude Include="AnimatedModel.h" />
+	<ClInclude Include="ThirdParty\ufbx\ufbx.h" />
+	<ClInclude Include="CatmullRomSpline.h" />
+	<ClInclude Include="GameAudio.h" />
+	<ClInclude Include="LoadingScene.h" />
+	<ClInclude Include="Boss.h" />
     <ClInclude Include="Enemy.h" />
     <ClInclude Include="EnemyBullet.h" />
     <ClInclude Include="GameScene.h" />
     <ClInclude Include="LockOn.h" />
     <ClInclude Include="Player.h" />
+	<ClInclude Include="PauseMenu.h" />
     <ClInclude Include="PlayerBullet.h" />
     <ClInclude Include="RailCameraController.h" />
     <ClInclude Include="Skydome.h" />
+	<ClInclude Include="TutorialScene.h" />
     <ClInclude Include="WorldTransformUpdate.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

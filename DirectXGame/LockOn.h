@@ -34,6 +34,9 @@ private:
 	    const KamataEngine::Matrix4x4& viewProjection);
 
 private:
+	// Lock-on reticle sprite drawn in both debug and release builds.
+	KamataEngine::Sprite* spriteReticle_ = nullptr;
+
 	// Lock-on target
 	Enemy* target_ = nullptr;
 

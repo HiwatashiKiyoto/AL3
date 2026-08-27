@@ -7,6 +7,7 @@
 class Player;
 // GameScene class forward declaration
 class GameScene;
+class AnimatedModel;
 
 /// <summary>
 /// Enemy
@@ -15,6 +16,15 @@ class Enemy
 {
 public:
 	~Enemy();
+
+	// Movement pattern selected by the enemy-pop script.
+	enum class BehaviorPattern
+	{
+		Straight = 0,
+		MoveLeft,
+		MoveRight,
+		Zigzag,
+	};
 
 	// Behavior phase
 	enum class Phase
@@ -28,7 +38,10 @@ public:
 	/// </summary>
 	/// <param name="model">Model</param>
 	/// <param name="position">Initial position</param>
-	void Initialize(KamataEngine::Model* model, const KamataEngine::Vector3& position);
+	void Initialize(
+	    KamataEngine::Model* model, KamataEngine::Model* bulletModel, AnimatedModel* animatedModel,
+	    uint32_t modelTextureHandle, uint32_t bulletTextureHandle, const KamataEngine::Vector3& position,
+	    BehaviorPattern behaviorPattern = BehaviorPattern::Straight);
 
 	/// <summary>
 	/// Update
@@ -50,12 +63,16 @@ public:
 	/// Get phase name
 	/// </summary>
 	const char* GetPhaseName() const;
+	const char* GetBehaviorPatternName() const;
 
 	// Set player
 	void SetPlayer(Player* player) { player_ = player; }
 
 	// Set game scene
 	void SetGameScene(GameScene* gameScene) { gameScene_ = gameScene; }
+
+	// Training dummies stay still and never fire, but can still be locked on to and destroyed.
+	void SetTrainingDummy(bool isTrainingDummy) { isTrainingDummy_ = isTrainingDummy; }
 
 	// Get world position
 	KamataEngine::Vector3 GetWorldPosition() const;
@@ -81,9 +98,12 @@ private:
 
 	// World transform data
 	KamataEngine::WorldTransform worldTransform_;
+	KamataEngine::WorldTransform worldTransformModel_;
 
 	// Borrowed model data
 	KamataEngine::Model* model_ = nullptr;
+	KamataEngine::Model* bulletModel_ = nullptr;
+	AnimatedModel* animatedModel_ = nullptr;
 
 	// Borrowed player data
 	Player* player_ = nullptr;
@@ -93,9 +113,14 @@ private:
 
 	// Texture handle
 	uint32_t textureHandle_ = 0u;
+	uint32_t bulletTextureHandle_ = 0u;
 
 	// Phase
 	Phase phase_ = Phase::Approach;
+
+	// Movement pattern selected by the script
+	BehaviorPattern behaviorPattern_ = BehaviorPattern::Straight;
+	int32_t behaviorTimer_ = 0;
 
 	// Fire interval
 	static const int kFireInterval = 60;
@@ -105,4 +130,5 @@ private:
 
 	// Death flag
 	bool isDead_ = false;
+	bool isTrainingDummy_ = false;
 };
